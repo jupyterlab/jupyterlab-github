@@ -49,6 +49,7 @@ function activateFileBrowser(app: JupyterLab, manager: IDocumentManager, factory
     driveName: drive.name
   });
 
+  browser.addClass('jp-GitHub');
   browser.title.iconClass = 'jp-GitHub-tablogo';
   browser.id = 'github-file-browser';
 

@@ -9,3 +9,23 @@
   height: var(--jp-private-sidebar-tab-width);
   background-image: url(octocat.png);
 }
+
+.jp-GitHub .jp-Toolbar-button.jp-AddIcon {
+  display: none;
+}
+
+.jp-GitHub .jp-Toolbar-button.jp-newFolderIcon {
+  display: none;
+}
+
+.jp-GitHub .jp-Toolbar-button.jp-id-upload {
+  display: none;
+}
+
+.jp-GitHub .jp-DirListing-headerItem.jp-id-modified {
+  display: none;
+}
+
+.jp-GitHub .jp-DirListing-itemModified {
+  display: none;
+}
