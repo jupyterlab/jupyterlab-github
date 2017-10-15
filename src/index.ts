@@ -17,6 +17,10 @@ import {
   GitHubDrive
 } from './contents';
 
+import {
+  GitHubFileBrowser
+} from './browser';
+
 import '../style/index.css';
 
 /**
@@ -49,13 +53,14 @@ function activateFileBrowser(app: JupyterLab, manager: IDocumentManager, factory
     driveName: drive.name
   });
 
-  browser.addClass('jp-GitHub');
-  browser.title.iconClass = 'jp-GitHub-tablogo';
-  browser.id = 'github-file-browser';
+  const gitHubBrowser = new GitHubFileBrowser(browser, drive);
+
+  gitHubBrowser.title.iconClass = 'jp-GitHub-tablogo';
+  gitHubBrowser.id = 'github-file-browser';
 
   // Add the file browser widget to the application restorer.
-  restorer.add(browser, NAMESPACE);
-  app.shell.addToLeftArea(browser, { rank: 102 });
+  restorer.add(gitHubBrowser, NAMESPACE);
+  app.shell.addToLeftArea(gitHubBrowser, { rank: 102 });
 
   return;
 }
