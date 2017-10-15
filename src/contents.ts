@@ -6,7 +6,7 @@ import {
 } from '@phosphor/signaling';
 
 import {
-  URLExt
+  PathExt, URLExt
 } from '@jupyterlab/coreutils';
 
 import {
@@ -18,7 +18,8 @@ import {
 } from '@jupyterlab/services';
 
 import {
-  apiRequest, GITHUB_API, gitHubToJupyter
+  apiRequest, GITHUB_API, gitHubToJupyter,
+  GitHubBlob, GitHubFileContents, GitHubDirectoryListing
 } from './github';
 
 
@@ -98,6 +99,13 @@ class GitHubDrive implements Contents.IDrive {
     const apiPath = URLExt.join('repos', REPO, 'contents', path);
     return apiRequest<any>(apiPath).then(contents => {
       return gitHubToJupyter(path, contents, this._fileTypeForPath);
+    }).catch(response => {
+
+      if (response.status === 403) {
+        return this._getBlob(path);
+      } else {
+        throw response;
+      }
     });
   }
 
@@ -228,6 +236,27 @@ class GitHubDrive implements Contents.IDrive {
    */
   deleteCheckpoint(path: string, checkpointID: string): Promise<void> {
     return Promise.reject('Read only');
+  }
+
+  private _getBlob(path: string): Promise<Contents.IModel> {
+    let blobData: GitHubFileContents;
+    const dirname = PathExt.dirname(path);
+    const dirApiPath = URLExt.join('repos', REPO, 'contents', dirname);
+    return apiRequest<GitHubDirectoryListing>(dirApiPath).then(dirContents => {
+      for (let item of dirContents) {
+        if (item.path === path) {
+          blobData = item as GitHubFileContents;
+          return item.sha;
+        }
+      }
+      throw Error('Cannot find sha for blob');
+    }).then(sha => {
+      const blobApiPath = URLExt.join('repos', REPO, 'git', 'blobs', sha);
+      return apiRequest<GitHubBlob>(blobApiPath);
+    }).then(blob => {
+      blobData.content = blob.content;
+      return gitHubToJupyter(path, blobData, this._fileTypeForPath);
+    });
   }
 
   private _fileTypeForPath: (path: string) => DocumentRegistry.IFileType;

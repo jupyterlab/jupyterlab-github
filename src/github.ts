@@ -32,14 +32,14 @@ function apiRequest<T>(url: string): Promise<T> {
       } else {
         reject({
           status: xhr.status,
-          statusText: xhr.statusText
+          responseText: xhr.statusText
         });
       }
     };
     xhr.onerror = ()=>{
       reject({
         status: xhr.status,
-        statusText: xhr.statusText
+        responseText: xhr.statusText
       });
     };
     xhr.send();
@@ -89,6 +89,21 @@ class GitHubDirectoryContents extends GitHubContents {
   type: 'dir';
 }
 
+export
+class GitHubBlob {
+  type: undefined;
+
+  content: string;
+
+  encoding: 'base64';
+
+  url: string;
+
+  sha: string;
+
+  size: number;
+}
+
 
 export
 class GitHubSymLinkContents extends GitHubContents {
@@ -99,7 +114,7 @@ export
 type GitHubDirectoryListing = GitHubContents[];
 
 export
-function gitHubToJupyter(path: string, contents: GitHubContents, fileTypeForPath: (path: string) => DocumentRegistry.IFileType): Contents.IModel {
+function gitHubToJupyter(path: string, contents: GitHubContents | GitHubBlob, fileTypeForPath: (path: string) => DocumentRegistry.IFileType): Contents.IModel {
   if (Array.isArray(contents)) {
     return {
       name: PathExt.basename(path),
@@ -114,7 +129,7 @@ function gitHubToJupyter(path: string, contents: GitHubContents, fileTypeForPath
         return gitHubToJupyter(c.path, c, fileTypeForPath);
       })
     } as Contents.IModel;
-  } else if (contents.type === 'file') {
+  } else if (contents.type === 'file' || contents.type === undefined) {
     const fileType = fileTypeForPath(path);
     const fileContents = (contents as GitHubFileContents).content;
     let content: any;
