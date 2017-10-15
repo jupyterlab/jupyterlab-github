@@ -1,0 +1,11 @@
+/*-----------------------------------------------------------------------------
+| Copyright (c) Jupyter Development Team.
+| Distributed under the terms of the Modified BSD License.
+|----------------------------------------------------------------------------*/
+
+.jp-GitHub-tablogo {
+  background-size: 100%;
+  width: var(--jp-private-sidebar-tab-width);
+  height: var(--jp-private-sidebar-tab-width);
+  background-image: url(octocat.png);
+}

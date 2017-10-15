@@ -17,6 +17,8 @@ import {
   GitHubDrive
 } from './contents';
 
+import '../style/index.css';
+
 /**
  * Google Drive filebrowser plugin state namespace.
  */
@@ -26,7 +28,7 @@ const NAMESPACE = 'github-filebrowser';
  * The JupyterLab plugin for the GitHub Filebrowser.
  */
 const fileBrowserPlugin: JupyterLabPlugin<void> = {
-  id: '@jupyterlab/github:drive',
+  id: 'jupyterlab-github:drive',
   requires: [IDocumentManager, IFileBrowserFactory, ILayoutRestorer],
   activate: activateFileBrowser,
   autoStart: true
@@ -46,6 +48,10 @@ function activateFileBrowser(app: JupyterLab, manager: IDocumentManager, factory
     commands,
     driveName: drive.name
   });
+
+  browser.title.iconClass = 'jp-GitHub-tablogo';
+  browser.id = 'github-file-browser';
+
   // Add the file browser widget to the application restorer.
   restorer.add(browser, NAMESPACE);
   app.shell.addToLeftArea(browser, { rank: 102 });

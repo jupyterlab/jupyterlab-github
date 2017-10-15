@@ -9,7 +9,8 @@
     "lib/*/*d.ts",
     "lib/*/*.js",
     "lib/*.d.ts",
-    "lib/*.js"
+    "lib/*.js",
+    "style/*.*"
   ],
   "directories": {
     "lib": "lib/"
