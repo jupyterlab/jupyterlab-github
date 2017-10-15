@@ -6,7 +6,7 @@ import {
 } from '@phosphor/signaling';
 
 import {
-  PathExt, URLExt
+  PathExt, URLExt, IChangedArgs 
 } from '@jupyterlab/coreutils';
 
 import {
@@ -22,8 +22,6 @@ import {
   GitHubBlob, GitHubFileContents, GitHubDirectoryListing
 } from './github';
 
-
-const REPO = 'jupyterlab/jupyterlab';
 
 /**
  * A Contents.IDrive implementation that serves as a read-only
@@ -53,6 +51,56 @@ class GitHubDrive implements Contents.IDrive {
   }
 
   readonly serverSettings: ServerConnection.ISettings;
+
+  /**
+   * The name of the current organization for the drive.
+   */
+  get org(): string {
+    return this._org;
+  }
+  set org(org: string) {
+    const oldValue = this._org;
+    this._org = org;
+    this.repo = '';
+    this._orgChanged.emit({
+      name: 'org',
+      oldValue,
+      newValue: org
+    });
+  }
+
+  /**
+   * The name of the current repository for the drive.
+   */
+  get repo(): string {
+    return this._repo;
+  }
+  set repo(repo: string) {
+    const oldValue = this._repo;
+    this._repo = repo;
+    this.branch = '';
+    this._repoChanged.emit({
+      name: 'repo',
+      oldValue,
+      newValue: repo
+    });
+  }
+
+  /**
+   * The name of the current branch for the drive.
+   */
+  get branch(): string {
+    return this._branch;
+  }
+  set branch(branch: string) {
+    const oldValue = this._branch;
+    this._branch = branch;
+    this._branchChanged.emit({
+      name: 'branch',
+      oldValue,
+      newValue: branch
+    });
+  }
 
   /**
    * A signal emitted when a file operation takes place.
@@ -96,7 +144,7 @@ class GitHubDrive implements Contents.IDrive {
    * @returns A promise which resolves with the file content.
    */
   get(path: string, options?: Contents.IFetchOptions): Promise<Contents.IModel> {
-    const apiPath = URLExt.join('repos', REPO, 'contents', path);
+    const apiPath = URLExt.join('repos', this._org, this._repo, 'contents', path);
     return proxiedApiRequest<any>(apiPath).then(contents => {
       return gitHubToJupyter(path, contents, this._fileTypeForPath);
     }).catch(response => {
@@ -241,7 +289,7 @@ class GitHubDrive implements Contents.IDrive {
   private _getBlob(path: string): Promise<Contents.IModel> {
     let blobData: GitHubFileContents;
     const dirname = PathExt.dirname(path);
-    const dirApiPath = URLExt.join('repos', REPO, 'contents', dirname);
+    const dirApiPath = URLExt.join('repos', this._org, this._repo, 'contents', dirname);
     return proxiedApiRequest<GitHubDirectoryListing>(dirApiPath).then(dirContents => {
       for (let item of dirContents) {
         if (item.path === path) {
@@ -251,7 +299,8 @@ class GitHubDrive implements Contents.IDrive {
       }
       throw Error('Cannot find sha for blob');
     }).then(sha => {
-      const blobApiPath = URLExt.join('repos', REPO, 'git', 'blobs', sha);
+      const blobApiPath = URLExt.join(
+        'repos', this._org, this._repo, 'git', 'blobs', sha);
       return proxiedApiRequest<GitHubBlob>(blobApiPath);
     }).then(blob => {
       blobData.content = blob.content;
@@ -262,6 +311,12 @@ class GitHubDrive implements Contents.IDrive {
   private _fileTypeForPath: (path: string) => DocumentRegistry.IFileType;
   private _isDisposed = false;
   private _fileChanged = new Signal<this, Contents.IChangedArgs>(this);
+  private _org = '';
+  private _repo = '';
+  private _branch = '';
+  private _orgChanged = new Signal<this, IChangedArgs<string>>(this);
+  private _repoChanged = new Signal<this, IChangedArgs<string>>(this);
+  private _branchChanged = new Signal<this, IChangedArgs<string>>(this);
 }
 
 
