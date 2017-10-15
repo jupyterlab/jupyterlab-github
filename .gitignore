@@ -1,0 +1,5 @@
+*.bundle.*
+lib/
+test/build/*
+node_modules/
+npm-debug.log
