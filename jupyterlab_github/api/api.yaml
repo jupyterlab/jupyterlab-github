@@ -1,0 +1,25 @@
+openapi: 3.0.0
+info:
+  title: JupyterLab GitHub proxy
+  description: Proxies GitHub API requests from JupyterLab to GitHub, optionally adding credentials to the request.
+  version: 0.1.0
+  
+paths:
+  /github/{apiPath}:
+    get:
+      summary: Gets the resource at the apiPath for the GitHub API v3.
+      parameters:
+        - name: apiPath
+          in: path
+          required: true
+          description: API path for GitHub v3.
+          schema:
+            type: string
+            format: uri
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Not found
+        '403':
+          description: Not authorized
