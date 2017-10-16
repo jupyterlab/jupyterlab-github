@@ -18,7 +18,7 @@ import {
 } from '@jupyterlab/services';
 
 import {
-  apiRequest, GITHUB_API, gitHubToJupyter,
+  proxiedApiRequest, GITHUB_API, gitHubToJupyter,
   GitHubBlob, GitHubFileContents, GitHubDirectoryListing
 } from './github';
 
@@ -97,7 +97,7 @@ class GitHubDrive implements Contents.IDrive {
    */
   get(path: string, options?: Contents.IFetchOptions): Promise<Contents.IModel> {
     const apiPath = URLExt.join('repos', REPO, 'contents', path);
-    return apiRequest<any>(apiPath).then(contents => {
+    return proxiedApiRequest<any>(apiPath).then(contents => {
       return gitHubToJupyter(path, contents, this._fileTypeForPath);
     }).catch(response => {
 
@@ -242,7 +242,7 @@ class GitHubDrive implements Contents.IDrive {
     let blobData: GitHubFileContents;
     const dirname = PathExt.dirname(path);
     const dirApiPath = URLExt.join('repos', REPO, 'contents', dirname);
-    return apiRequest<GitHubDirectoryListing>(dirApiPath).then(dirContents => {
+    return proxiedApiRequest<GitHubDirectoryListing>(dirApiPath).then(dirContents => {
       for (let item of dirContents) {
         if (item.path === path) {
           blobData = item as GitHubFileContents;
@@ -252,7 +252,7 @@ class GitHubDrive implements Contents.IDrive {
       throw Error('Cannot find sha for blob');
     }).then(sha => {
       const blobApiPath = URLExt.join('repos', REPO, 'git', 'blobs', sha);
-      return apiRequest<GitHubBlob>(blobApiPath);
+      return proxiedApiRequest<GitHubBlob>(blobApiPath);
     }).then(blob => {
       blobData.content = blob.content;
       return gitHubToJupyter(path, blobData, this._fileTypeForPath);

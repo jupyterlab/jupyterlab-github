@@ -10,7 +10,7 @@ import {
 } from '@jupyterlab/docregistry';
 
 import {
-  Contents
+  Contents, ServerConnection
 } from '@jupyterlab/services';
 
 export
@@ -43,6 +43,23 @@ function apiRequest<T>(url: string): Promise<T> {
       });
     };
     xhr.send();
+  });
+}
+
+export
+function proxiedApiRequest<T>(url: string): Promise<T> {
+  const serverSettings = ServerConnection.makeSettings();
+  let request = {
+    url: 'github/'+url,
+    method: 'GET',
+    cache: true
+  };
+
+  return ServerConnection.makeRequest(request, serverSettings).then(response => {
+    if (response.xhr.status !== 200) {
+      throw ServerConnection.makeError(response);
+    }
+    return response.data;
   });
 }
 
