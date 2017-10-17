@@ -2,7 +2,7 @@
 // Distributed under the terms of the Modified BSD License.
 
 import {
-  Widget
+  PanelLayout, Widget
 } from '@phosphor/widgets';
 
 import {
@@ -14,17 +14,19 @@ import {
 } from './contents';
 
 /**
- * Widget for hosting the Google Drive filebrowser.
+ * Widget for hosting the GitHub filebrowser.
  */
 export
 class GitHubFileBrowser extends Widget {
   constructor(browser: FileBrowser, drive: GitHubDrive) {
     super();
-    this.addClass('jp-GitHub');
+    this.addClass('jp-GitHubBrowser');
+    this.layout = new PanelLayout();
+    (this.layout as PanelLayout).addWidget(browser);
     this._browser = browser;
-    this._browser.toolbar
     this._drive = drive;
-    this.node.appendChild(this._browser.node);
+    drive.org = 'ian-r-rose';
+    drive.repo = 'jupyterlab-github';
   }
 
   private _browser: FileBrowser;

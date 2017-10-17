@@ -10,22 +10,32 @@
   background-image: url(octocat.png);
 }
 
-.jp-GitHub .jp-Toolbar-button.jp-AddIcon {
+.jp-GitHubBrowser {
+  background-color: var(--jp-layout-color1);
+  height: 100%;
+}
+
+.jp-GitHubBrowser .jp-FileBrowser {
+  flex-grow: 1;
+  height: 100%;
+}
+
+.jp-GitHubBrowser .jp-Toolbar-button.jp-AddIcon {
   display: none;
 }
 
-.jp-GitHub .jp-Toolbar-button.jp-newFolderIcon {
+.jp-GitHubBrowser .jp-Toolbar-button.jp-newFolderIcon {
   display: none;
 }
 
-.jp-GitHub .jp-Toolbar-button.jp-id-upload {
+.jp-GitHubBrowser .jp-Toolbar-button.jp-id-upload {
   display: none;
 }
 
-.jp-GitHub .jp-DirListing-headerItem.jp-id-modified {
+.jp-GitHubBrowser .jp-DirListing-headerItem.jp-id-modified {
   display: none;
 }
 
-.jp-GitHub .jp-DirListing-itemModified {
+.jp-GitHubBrowser .jp-DirListing-itemModified {
   display: none;
 }

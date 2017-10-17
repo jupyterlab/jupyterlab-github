@@ -311,8 +311,8 @@ class GitHubDrive implements Contents.IDrive {
   private _fileTypeForPath: (path: string) => DocumentRegistry.IFileType;
   private _isDisposed = false;
   private _fileChanged = new Signal<this, Contents.IChangedArgs>(this);
-  private _org = '';
-  private _repo = '';
+  private _org = 'ian-r-rose';
+  private _repo = 'jupyterlab-github';
   private _branch = '';
   private _orgChanged = new Signal<this, IChangedArgs<string>>(this);
   private _repoChanged = new Signal<this, IChangedArgs<string>>(this);
