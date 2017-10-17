@@ -61,7 +61,12 @@ class GitHubEditableName extends Widget {
     this.name = initialName;
 
     this.node.onclick = () => {
+      if (this._pending) {
+        return;
+      }
+      this._pending = true;
       Private.changeField(this._nameNode, this._editNode).then(value => {
+        this._pending = false;
       });
     }
   }
@@ -73,6 +78,7 @@ class GitHubEditableName extends Widget {
     this._nameNode.textContent = value;
   }
 
+  private _pending  = false;
   private _nameNode: HTMLElement;
   private _editNode: HTMLInputElement;
 }
@@ -100,7 +106,7 @@ namespace Private {
     let parent = text.parentElement as HTMLElement;
     let initialValue = text.textContent;
     edit.value = initialValue;
-    parent.style.width = String(parent.offsetWidth)+'px';
+    parent.style.width = String(parent.offsetWidth+3)+'px';
     parent.replaceChild(edit, text);
     edit.focus();
 
