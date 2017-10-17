@@ -60,6 +60,8 @@ function proxiedApiRequest<T>(url: string): Promise<T> {
       throw ServerConnection.makeError(response);
     }
     return response.data;
+  }).catch(response => {
+    throw ServerConnection.makeError(response);
   });
 }
 

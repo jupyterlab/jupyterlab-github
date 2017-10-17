@@ -142,8 +142,12 @@ class GitHubDrive implements Contents.IDrive {
     return proxiedApiRequest<any>(apiPath).then(contents => {
       return gitHubToJupyter(path, contents, this._fileTypeForPath);
     }).catch(response => {
-
-      if (response.status === 403) {
+      if(response.xhr.status === 404) {
+        console.warn('GitHub: cannot find org/repo. '+
+                     'Perhaps you misspelled something?');
+        return Private.DummyDirectory;
+      }
+      if (response.xhr.status === 403) {
         return this._getBlob(path);
       } else {
         throw response;
