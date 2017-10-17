@@ -2,8 +2,16 @@
 // Distributed under the terms of the Modified BSD License.
 
 import {
+  Signal, ISignal
+} from '@phosphor/signaling';
+
+import {
   PanelLayout, Widget
 } from '@phosphor/widgets';
+
+import {
+  IChangedArgs
+} from '@jupyterlab/coreutils';
 
 import {
   FileBrowser
@@ -25,10 +33,8 @@ class GitHubFileBrowser extends Widget {
     (this.layout as PanelLayout).addWidget(browser);
     this._browser = browser;
     this._drive = drive;
-    drive.org = 'ian-r-rose';
-    drive.repo = 'jupyterlab-github';
 
-    let orgName = new GitHubEditableName(drive.org);
+    let orgName = new GitHubEditableName(drive.org, '<Edit Organization>');
     orgName.addClass('jp-GitHubEditableOrgName');
     orgName.node.title = 'Organization';
     this._browser.toolbar.addItem('organization', orgName);
@@ -38,10 +44,25 @@ class GitHubFileBrowser extends Widget {
     separator.node.textContent = '/';
     this._browser.toolbar.addItem('separator', separator);
 
-    let repoName = new GitHubEditableName(drive.repo);
+    let repoName = new GitHubEditableName(drive.repo, '<Edit Repository>');
     repoName.addClass('jp-GitHubEditableRepoName');
     repoName.node.title = 'Repository';
     this._browser.toolbar.addItem('repository', repoName);
+
+    repoName.changed.connect(this._onRepoChanged, this);
+    orgName.changed.connect(this._onOrgChanged, this);
+  }
+
+  private _onRepoChanged(sender: GitHubEditableName, args: IChangedArgs<string>) {
+    this._drive.repo = args.newValue;
+    this._browser.model.cd('');
+    this._browser.model.refresh();
+  }
+
+  private _onOrgChanged(sender: GitHubEditableName, args: IChangedArgs<string>) {
+    this._drive.org = args.newValue;
+    this._browser.model.cd('');
+    this._browser.model.refresh();
   }
 
   private _browser: FileBrowser;
@@ -50,12 +71,14 @@ class GitHubFileBrowser extends Widget {
 
 export
 class GitHubEditableName extends Widget {
-  constructor(initialName: string = '') {
+  constructor(initialName: string = '', placeholder?: string) {
     super();
     this.addClass('jp-GitHubEditableName');
     this._nameNode = document.createElement('div');
     this._editNode = document.createElement('input');
     this._editNode.className = 'jp-GitHubEditableNameInput';
+
+    this._placeholder = placeholder || '<Edit Name>'
 
     this.node.appendChild(this._nameNode);
     this.name = initialName;
@@ -65,20 +88,47 @@ class GitHubEditableName extends Widget {
         return;
       }
       this._pending = true;
+      const oldValue = this.name;
       Private.changeField(this._nameNode, this._editNode).then(value => {
         this._pending = false;
+        if (oldValue === value) {
+          return;
+        }
+        this._changed.emit({
+          name: 'name',
+          oldValue,
+          newValue: value
+        });
       });
     }
   }
 
   get name(): string {
-    return this._nameNode.textContent;
+    return this._name;
   }
   set name(value: string) {
-    this._nameNode.textContent = value;
+    const oldValue = this.name;
+    if (oldValue === value) {
+      return;
+    }
+    this._name = value;
+    this._nameNode.textContent = value || this._placeholder;
+    this._changed.emit({
+      name: 'name',
+      oldValue,
+      newValue: value
+    });
   }
 
+  get changed(): ISignal<this, IChangedArgs<string>> {
+    return this._changed;
+  }
+
+
+  private _changed = new Signal<this, IChangedArgs<string>>(this);
+  private _name: string;
   private _pending  = false;
+  private _placeholder: string;
   private _nameNode: HTMLElement;
   private _editNode: HTMLInputElement;
 }

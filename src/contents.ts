@@ -6,7 +6,7 @@ import {
 } from '@phosphor/signaling';
 
 import {
-  PathExt, URLExt, IChangedArgs 
+  PathExt, URLExt
 } from '@jupyterlab/coreutils';
 
 import {
@@ -59,14 +59,11 @@ class GitHubDrive implements Contents.IDrive {
     return this._org;
   }
   set org(org: string) {
-    const oldValue = this._org;
+    if (org === this._org) {
+      return;
+    }
     this._org = org;
     this.repo = '';
-    this._orgChanged.emit({
-      name: 'org',
-      oldValue,
-      newValue: org
-    });
   }
 
   /**
@@ -76,14 +73,11 @@ class GitHubDrive implements Contents.IDrive {
     return this._repo;
   }
   set repo(repo: string) {
-    const oldValue = this._repo;
+    if (repo === this._repo) {
+      return;
+    }
     this._repo = repo;
     this.branch = '';
-    this._repoChanged.emit({
-      name: 'repo',
-      oldValue,
-      newValue: repo
-    });
   }
 
   /**
@@ -93,13 +87,10 @@ class GitHubDrive implements Contents.IDrive {
     return this._branch;
   }
   set branch(branch: string) {
-    const oldValue = this._branch;
+    if (branch === this._branch) {
+      return;
+    }
     this._branch = branch;
-    this._branchChanged.emit({
-      name: 'branch',
-      oldValue,
-      newValue: branch
-    });
   }
 
   /**
@@ -144,6 +135,9 @@ class GitHubDrive implements Contents.IDrive {
    * @returns A promise which resolves with the file content.
    */
   get(path: string, options?: Contents.IFetchOptions): Promise<Contents.IModel> {
+    if (this._org === '' || this._repo === '') {
+      return Promise.resolve(Private.DummyDirectory);
+    }
     const apiPath = URLExt.join('repos', this._org, this._repo, 'contents', path);
     return proxiedApiRequest<any>(apiPath).then(contents => {
       return gitHubToJupyter(path, contents, this._fileTypeForPath);
@@ -311,12 +305,22 @@ class GitHubDrive implements Contents.IDrive {
   private _fileTypeForPath: (path: string) => DocumentRegistry.IFileType;
   private _isDisposed = false;
   private _fileChanged = new Signal<this, Contents.IChangedArgs>(this);
-  private _org = 'ian-r-rose';
-  private _repo = 'jupyterlab-github';
+  private _org = '';
+  private _repo = '';
   private _branch = '';
-  private _orgChanged = new Signal<this, IChangedArgs<string>>(this);
-  private _repoChanged = new Signal<this, IChangedArgs<string>>(this);
-  private _branchChanged = new Signal<this, IChangedArgs<string>>(this);
 }
 
-
+namespace Private {
+  export
+  const DummyDirectory: Contents.IModel = {
+    type: 'directory',
+    path: '',
+    name: '',
+    format: 'json',
+    content: [],
+    created: '',
+    writable: false,
+    last_modified: '',
+    mimetype: null,
+  };
+}
