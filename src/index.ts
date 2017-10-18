@@ -6,6 +6,10 @@ import {
 } from '@jupyterlab/application';
 
 import {
+  IStateDB
+} from '@jupyterlab/coreutils';
+
+import {
   IDocumentManager
 } from '@jupyterlab/docmanager';
 
@@ -33,7 +37,7 @@ const NAMESPACE = 'github-filebrowser';
  */
 const fileBrowserPlugin: JupyterLabPlugin<void> = {
   id: 'jupyterlab-github:drive',
-  requires: [IDocumentManager, IFileBrowserFactory, ILayoutRestorer],
+  requires: [IDocumentManager, IFileBrowserFactory, ILayoutRestorer, IStateDB],
   activate: activateFileBrowser,
   autoStart: true
 };
@@ -41,7 +45,7 @@ const fileBrowserPlugin: JupyterLabPlugin<void> = {
 /**
  * Activate the file browser.
  */
-function activateFileBrowser(app: JupyterLab, manager: IDocumentManager, factory: IFileBrowserFactory, restorer: ILayoutRestorer): void {
+function activateFileBrowser(app: JupyterLab, manager: IDocumentManager, factory: IFileBrowserFactory, restorer: ILayoutRestorer, state: IStateDB): void {
   const { commands } = app;
 
   // Add the Google Drive backend to the contents manager.
@@ -57,6 +61,17 @@ function activateFileBrowser(app: JupyterLab, manager: IDocumentManager, factory
 
   gitHubBrowser.title.iconClass = 'jp-GitHub-tablogo';
   gitHubBrowser.id = 'github-file-browser';
+
+  // See if we have an org cached in the IStateDB.
+  const id = NAMESPACE;
+  Promise.all([state.fetch(id), app.restored]).then(([args]) => {
+    const org = (args && args['org'] as string) || '';
+    gitHubBrowser.orgName.name = org;
+  });
+  // Keep the IStateDB updated.
+  gitHubBrowser.orgName.changed.connect((sender, args) => {
+    state.save(id, { org: args.newValue });
+  });
 
   // Add the file browser widget to the application restorer.
   restorer.add(gitHubBrowser, NAMESPACE);

@@ -39,12 +39,17 @@ class GitHubFileBrowser extends Widget {
     orgLabel.node.textContent = 'Org:';
     this._browser.toolbar.addItem('label', orgLabel);
 
-    let orgName = new GitHubEditableName(drive.org, '<Edit Organization>');
-    orgName.addClass('jp-GitHubEditableOrgName');
-    orgName.node.title = 'Organization';
-    this._browser.toolbar.addItem('organization', orgName);
-    orgName.changed.connect(this._onOrgChanged, this);
+    this.orgName = new GitHubEditableName(drive.org, '<Edit Organization>');
+    this.orgName.addClass('jp-GitHubEditableOrgName');
+    this.orgName.node.title = 'Organization';
+    this._browser.toolbar.addItem('organization', this.orgName);
+    this.orgName.changed.connect(this._onOrgChanged, this);
   }
+
+  /**
+   * An editable widget hosting the current org name.
+   */
+  readonly orgName: GitHubEditableName;
 
   private _onOrgChanged(sender: GitHubEditableName, args: IChangedArgs<string>) {
     this._drive.org = args.newValue;
