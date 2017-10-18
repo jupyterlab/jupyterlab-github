@@ -304,8 +304,14 @@ class GitHubDrive implements Contents.IDrive {
     return Promise.reject('Read only');
   }
 
+  /**
+   * If a file is too large (> 1Mb), we need to access it over the
+   * GitHub Git Data API.
+   */
   private _getBlob(path: string): Promise<Contents.IModel> {
     let blobData: GitHubFileContents;
+    // Get the contents of the parent directory so that we can
+    // get the sha of the blob.
     const dirname = PathExt.dirname(path);
     const dirApiPath = URLExt.join('repos', this._org, this._repo, 'contents', dirname);
     return this._apiRequest<GitHubDirectoryListing>(dirApiPath).then(dirContents => {
@@ -317,15 +323,21 @@ class GitHubDrive implements Contents.IDrive {
       }
       throw Error('Cannot find sha for blob');
     }).then(sha => {
+      //Once we have the sha, form the api url and make the request.
       const blobApiPath = URLExt.join(
         'repos', this._org, this._repo, 'git', 'blobs', sha);
       return this._apiRequest<GitHubBlob>(blobApiPath);
     }).then(blob => {
+      //Convert the data to a Contents.IModel.
       blobData.content = blob.content;
       return gitHubToJupyter(path, blobData, this._fileTypeForPath);
     });
   }
 
+  /**
+   * Determine whether to make the call via the
+   * notebook server proxy or not.
+   */
   private _apiRequest<T>(path: string): Promise<T> {
     if (this._useProxy === true) {
       return proxiedApiRequest<T>(path, this._serverSettings);
