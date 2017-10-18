@@ -18,7 +18,7 @@ import {
 } from '@jupyterlab/services';
 
 import {
-  proxiedApiRequest, GITHUB_API, gitHubToJupyter,
+  browserApiRequest, proxiedApiRequest, GITHUB_API, gitHubToJupyter,
   GitHubBlob, GitHubFileContents, GitHubDirectoryListing
 } from './github';
 
@@ -35,12 +35,27 @@ class GitHubDrive implements Contents.IDrive {
    * @param options - The options used to initialize the object.
    */
   constructor(registry: DocumentRegistry) {
+    this._serverSettings = ServerConnection.makeSettings();
     this._fileTypeForPath = (path: string) => {
       const types = registry.getFileTypesForPath(path);
       return types.length === 0 ?
              registry.getFileType('text')! :
              types[0];
     };
+
+    // Test an api request to the notebook server
+    // to see if the server proxy is installed.
+    // If so, use that. If not, warn the user and
+    // use the client-side implementation.
+    proxiedApiRequest<any>('', this._serverSettings).then(() => {
+      this._useProxy = true;
+    }).catch(() => {
+      console.warn('The JupyterLab Github server extension appears '+
+                   'to be missing. If you do not install it with application '+
+                   'credentials, you are likely to be rate limited by GitHub '+
+                   'very quickly');
+      this._useProxy = false;
+    });
   }
 
   /**
@@ -139,18 +154,23 @@ class GitHubDrive implements Contents.IDrive {
       return Promise.resolve(Private.DummyDirectory);
     }
     const apiPath = URLExt.join('repos', this._org, this._repo, 'contents', path);
-    return proxiedApiRequest<any>(apiPath).then(contents => {
+    return this._apiRequest<any>(apiPath).then(contents => {
       return gitHubToJupyter(path, contents, this._fileTypeForPath);
     }).catch(response => {
       if(response.xhr.status === 404) {
         console.warn('GitHub: cannot find org/repo. '+
                      'Perhaps you misspelled something?');
         return Private.DummyDirectory;
-      }
-      if (response.xhr.status === 403) {
+      } else if (response.xhr.status === 403 &&
+                 response.xhr.responseText.indexOf('rate limit') !== -1) {
+        console.error(response.message);
+        return Promise.reject(response);
+      } else if (response.xhr.status === 403 &&
+                 response.xhr.responseText.indexOf('blob') !== -1) {
         return this._getBlob(path);
       } else {
-        throw response;
+        console.error(response.message);
+        return Promise.reject(response);
       }
     });
   }
@@ -284,11 +304,17 @@ class GitHubDrive implements Contents.IDrive {
     return Promise.reject('Read only');
   }
 
+  /**
+   * If a file is too large (> 1Mb), we need to access it over the
+   * GitHub Git Data API.
+   */
   private _getBlob(path: string): Promise<Contents.IModel> {
     let blobData: GitHubFileContents;
+    // Get the contents of the parent directory so that we can
+    // get the sha of the blob.
     const dirname = PathExt.dirname(path);
     const dirApiPath = URLExt.join('repos', this._org, this._repo, 'contents', dirname);
-    return proxiedApiRequest<GitHubDirectoryListing>(dirApiPath).then(dirContents => {
+    return this._apiRequest<GitHubDirectoryListing>(dirApiPath).then(dirContents => {
       for (let item of dirContents) {
         if (item.path === path) {
           blobData = item as GitHubFileContents;
@@ -297,15 +323,31 @@ class GitHubDrive implements Contents.IDrive {
       }
       throw Error('Cannot find sha for blob');
     }).then(sha => {
+      //Once we have the sha, form the api url and make the request.
       const blobApiPath = URLExt.join(
         'repos', this._org, this._repo, 'git', 'blobs', sha);
-      return proxiedApiRequest<GitHubBlob>(blobApiPath);
+      return this._apiRequest<GitHubBlob>(blobApiPath);
     }).then(blob => {
+      //Convert the data to a Contents.IModel.
       blobData.content = blob.content;
       return gitHubToJupyter(path, blobData, this._fileTypeForPath);
     });
   }
 
+  /**
+   * Determine whether to make the call via the
+   * notebook server proxy or not.
+   */
+  private _apiRequest<T>(path: string): Promise<T> {
+    if (this._useProxy === true) {
+      return proxiedApiRequest<T>(path, this._serverSettings);
+    } else {
+      return browserApiRequest(path);
+    }
+  }
+
+  private _serverSettings: ServerConnection.ISettings;
+  private _useProxy = false;
   private _fileTypeForPath: (path: string) => DocumentRegistry.IFileType;
   private _isDisposed = false;
   private _fileChanged = new Signal<this, Contents.IChangedArgs>(this);
