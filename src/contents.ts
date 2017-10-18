@@ -47,14 +47,16 @@ class GitHubDrive implements Contents.IDrive {
     // to see if the server proxy is installed.
     // If so, use that. If not, warn the user and
     // use the client-side implementation.
-    proxiedApiRequest<any>('', this._serverSettings).then(() => {
-      this._useProxy = true;
-    }).catch(() => {
-      console.warn('The JupyterLab Github server extension appears '+
-                   'to be missing. If you do not install it with application '+
-                   'credentials, you are likely to be rate limited by GitHub '+
-                   'very quickly');
-      this._useProxy = false;
+    this._useProxy = new Promise<boolean>(resolve => {
+      proxiedApiRequest<any>('', this._serverSettings).then(() => {
+        resolve(true);
+      }).catch(() => {
+        console.warn('The JupyterLab Github server extension appears '+
+                     'to be missing. If you do not install it with application '+
+                     'credentials, you are likely to be rate limited by GitHub '+
+                     'very quickly');
+        resolve(false);
+      });
     });
   }
 
@@ -131,7 +133,13 @@ class GitHubDrive implements Contents.IDrive {
     // If the org has been set and the path is empty, list
     // the repositories for the org.
     if (this._org !== '' && path === '') {
-      return this._listRepos();
+      return this._listRepos().then( response => {
+        return response;
+      }, () => {
+        console.warn('GitHub: cannot find org. '+
+                     'Perhaps you misspelled something?');
+        return Private.DummyDirectory;
+      });
     }
 
     // Otherwise identify the repository and get the contents of the
@@ -344,15 +352,17 @@ class GitHubDrive implements Contents.IDrive {
    * notebook server proxy or not.
    */
   private _apiRequest<T>(apiPath: string): Promise<T> {
-    if (this._useProxy === true) {
-      return proxiedApiRequest<T>(apiPath, this._serverSettings);
-    } else {
-      return browserApiRequest(apiPath);
-    }
+    return this._useProxy.then(result => {
+      if (result === true) {
+        return proxiedApiRequest<T>(apiPath, this._serverSettings);
+      } else {
+        return browserApiRequest<T>(apiPath);
+      }
+    });
   }
 
   private _serverSettings: ServerConnection.ISettings;
-  private _useProxy = false;
+  private _useProxy: Promise<boolean>;
   private _fileTypeForPath: (path: string) => DocumentRegistry.IFileType;
   private _isDisposed = false;
   private _fileChanged = new Signal<this, Contents.IChangedArgs>(this);
