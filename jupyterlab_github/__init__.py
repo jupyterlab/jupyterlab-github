@@ -1,6 +1,6 @@
-import tornado.web as web
+import tornado.gen as gen
 from tornado.httputil import url_concat
-from tornado.httpclient import HTTPClient, HTTPRequest, HTTPError
+from tornado.httpclient import AsyncHTTPClient, HTTPRequest, HTTPError
 
 from traitlets import Unicode
 from traitlets.config import Configurable
@@ -30,6 +30,7 @@ class GitHubHandler(APIHandler):
     Without this, the rate limit on unauthenticated calls is so limited as
     to be practically useless.
     """
+    @gen.coroutine
     def get(self, path = ''):
         """
         Proxy API requests to GitHub, adding 'client_id' and 'client_secret'
@@ -44,10 +45,12 @@ class GitHubHandler(APIHandler):
             # apply them to the request.
             if c.client_id != '' and c.client_secret != '':
                 api_path = url_concat(api_path,
-                    {'client_id': c.client_id, 'client_secret': c.client_secret})
-            client = HTTPClient()
+                    {'client_id': c.client_id,\
+                     'client_secret': c.client_secret,\
+                     'per_page': 100})
+            client = AsyncHTTPClient()
             request = HTTPRequest(api_path, user_agent='JupyterLab GitHub')
-            response = client.fetch(request)
+            response = yield client.fetch(request)
             self.finish(response.body)
         except HTTPError as err:
             self.set_status(err.code)

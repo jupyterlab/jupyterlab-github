@@ -20,25 +20,24 @@
   height: 100%;
 }
 
+.jp-GitHubBrowser .jp-GitHubOrgLabel {
+  width: auto;
+  text-align: left;
+  font-size: large;
+}
+
 .jp-GitHubBrowser .jp-GitHubEditableName {
   width: auto;
   overflow: hidden;
   white-space: nowrap;
-}
-
-.jp-GitHubBrowser .jp-GitHubEditableOrgName {
-  text-align: right;
-}
-
-.jp-GitHubBrowser .jp-GitHubSeparator {
+  text-align: center;
   font-size: large;
 }
 
-.jp-GitHubBrowser .jp-GitHubEditableRepoName {
-  text-align: left;
-}
-
 .jp-GitHubBrowser .jp-GitHubEditableNameInput {
+  background-color: var(--jp-layout-color2);
+  color: var(--jp-ui-font-color1);
+  font-size: large;
   text-align: center;
   width: 100%;
 }

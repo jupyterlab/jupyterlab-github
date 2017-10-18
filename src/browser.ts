@@ -34,35 +34,26 @@ class GitHubFileBrowser extends Widget {
     this._browser = browser;
     this._drive = drive;
 
-    let orgName = new GitHubEditableName(drive.org, '<Edit Organization>');
-    orgName.addClass('jp-GitHubEditableOrgName');
-    orgName.node.title = 'Organization';
-    this._browser.toolbar.addItem('organization', orgName);
+    const orgLabel = new Widget();
+    orgLabel.addClass('jp-GitHubOrgLabel');
+    orgLabel.node.textContent = 'Org:';
+    this._browser.toolbar.addItem('label', orgLabel);
 
-    let separator = new Widget();
-    separator.addClass('jp-GitHubSeparator');
-    separator.node.textContent = '/';
-    this._browser.toolbar.addItem('separator', separator);
-
-    let repoName = new GitHubEditableName(drive.repo, '<Edit Repository>');
-    repoName.addClass('jp-GitHubEditableRepoName');
-    repoName.node.title = 'Repository';
-    this._browser.toolbar.addItem('repository', repoName);
-
-    repoName.changed.connect(this._onRepoChanged, this);
-    orgName.changed.connect(this._onOrgChanged, this);
+    this.orgName = new GitHubEditableName(drive.org, '<Edit Organization>');
+    this.orgName.addClass('jp-GitHubEditableOrgName');
+    this.orgName.node.title = 'Organization';
+    this._browser.toolbar.addItem('organization', this.orgName);
+    this.orgName.changed.connect(this._onOrgChanged, this);
   }
 
-  private _onRepoChanged(sender: GitHubEditableName, args: IChangedArgs<string>) {
-    this._drive.repo = args.newValue;
-    this._browser.model.cd('');
-    this._browser.model.refresh();
-  }
+  /**
+   * An editable widget hosting the current org name.
+   */
+  readonly orgName: GitHubEditableName;
 
   private _onOrgChanged(sender: GitHubEditableName, args: IChangedArgs<string>) {
     this._drive.org = args.newValue;
-    this._browser.model.cd('');
-    this._browser.model.refresh();
+    this._browser.model.cd('/').then( () => { this._browser.model.refresh() });
   }
 
   private _browser: FileBrowser;
@@ -94,6 +85,7 @@ class GitHubEditableName extends Widget {
         if (oldValue === value) {
           return;
         }
+        this._name = value;
         this._changed.emit({
           name: 'name',
           oldValue,
