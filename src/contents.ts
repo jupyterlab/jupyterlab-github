@@ -133,13 +133,7 @@ class GitHubDrive implements Contents.IDrive {
     // If the org has been set and the path is empty, list
     // the repositories for the org.
     if (this._org !== '' && path === '') {
-      return this._listRepos().then( response => {
-        return response;
-      }, () => {
-        console.warn('GitHub: cannot find org. '+
-                     'Perhaps you misspelled something?');
-        return Private.DummyDirectory;
-      });
+      return this._listRepos();
     }
 
     // Otherwise identify the repository and get the contents of the
@@ -342,6 +336,10 @@ class GitHubDrive implements Contents.IDrive {
         const apiUserPath = URLExt.join('users', this._org, 'repos');
         this._apiRequest<GitHubRepo[]>(apiUserPath).then(repos => {
           resolve(Private.reposToDirectory(repos));
+        }).catch(() => {
+          console.warn('GitHub: cannot find org. '+
+                       'Perhaps you misspelled something?');
+          resolve(Private.DummyDirectory);
         });
       });
     });

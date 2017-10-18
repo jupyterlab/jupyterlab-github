@@ -85,6 +85,7 @@ class GitHubEditableName extends Widget {
         if (oldValue === value) {
           return;
         }
+        this._name = value;
         this._changed.emit({
           name: 'name',
           oldValue,
