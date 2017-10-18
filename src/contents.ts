@@ -154,18 +154,23 @@ class GitHubDrive implements Contents.IDrive {
       return Promise.resolve(Private.DummyDirectory);
     }
     const apiPath = URLExt.join('repos', this._org, this._repo, 'contents', path);
-    return proxiedApiRequest<any>(apiPath).then(contents => {
+    return this._apiRequest<any>(apiPath).then(contents => {
       return gitHubToJupyter(path, contents, this._fileTypeForPath);
     }).catch(response => {
       if(response.xhr.status === 404) {
         console.warn('GitHub: cannot find org/repo. '+
                      'Perhaps you misspelled something?');
         return Private.DummyDirectory;
-      }
-      if (response.xhr.status === 403) {
+      } else if (response.xhr.status === 403 &&
+                 response.xhr.responseText.indexOf('rate limit') !== -1) {
+        console.error(response.message);
+        return Promise.reject(response);
+      } else if (response.xhr.status === 403 &&
+                 response.xhr.responseText.indexOf('blob') !== -1) {
         return this._getBlob(path);
       } else {
-        throw response;
+        console.error(response.message);
+        return Promise.reject(response);
       }
     });
   }
