@@ -2,15 +2,11 @@
 // Distributed under the terms of the Modified BSD License.
 
 import {
-  PathExt, URLExt
+  URLExt
 } from '@jupyterlab/coreutils';
 
 import {
-  DocumentRegistry
-} from '@jupyterlab/docregistry';
-
-import {
-  Contents, ServerConnection
+  ServerConnection
 } from '@jupyterlab/services';
 
 export
@@ -120,7 +116,7 @@ class GitHubContents {
   sha: string;
 
   /**
-   * The URL for the file in the GitHub UI.
+   * The URL for the file in the GitHub API.
    */
   url: string;
 
@@ -191,12 +187,6 @@ class GitHubDirectoryContents extends GitHubContents {
 export
 class GitHubBlob {
   /**
-   * Add undefined attribute so that it may be assigned to
-   * a GitHubFileContents in gitHubToJupyter below.
-   */
-  type: undefined;
-
-  /**
    * The base64-encoded contents of the file.
    */
   content: string;
@@ -254,78 +244,57 @@ class GitHubSubmoduleContents extends GitHubContents {
 export
 type GitHubDirectoryListing = GitHubContents[];
 
-
 /**
- * Given a JSON GitHubContents object returned by the GitHub API v3,
- * convert it to the Jupyter Contents.IModel.
+ * Typings representing repositories from the GitHub API v3.
+ * Cf: https://developer.github.com/v3/repos/#list-organization-repositories
  *
- * @param path - the path to the contents model in the repository.
- *
- * @param contents - the GitHubContents object, or a GitHubBlob.
- *
- * @param fileTypeForPath - a function that, given a path, returns
- *   a DocumentRegistry.IFileType, used by JupyterLab to identify different
- *   openers, icons, etc.
- *
- * @returns a Contents.IModel object.
+ * #### Notes
+ *   This is incomplete.
  */
 export
-function gitHubToJupyter(path: string, contents: GitHubContents | GitHubBlob, fileTypeForPath: (path: string) => DocumentRegistry.IFileType): Contents.IModel {
-  if (Array.isArray(contents)) {
-    // If we have an array, it is a directory of GitHubContents.
-    // Iterate over that and convert all of the items in the array/
-    return {
-      name: PathExt.basename(path),
-      path: path,
-      format: 'json',
-      type: 'directory',
-      writable: false,
-      created: '',
-      last_modified: '',
-      mimetype: null,
-      content: contents.map( c => {
-        return gitHubToJupyter(c.path, c, fileTypeForPath);
-      })
-    } as Contents.IModel;
-  } else if (contents.type === 'file' || contents.type === undefined) {
-    // If it is a file or blob, convert to a file
-    const fileType = fileTypeForPath(path);
-    const fileContents = (contents as GitHubFileContents).content;
-    let content: any;
-    switch (fileType.fileFormat) {
-      case 'text':
-        content = fileContents ? atob(fileContents) : null;
-        break;
-      case 'base64':
-        content = fileContents || null;
-        break;
-      case 'json':
-        content = fileContents ? JSON.parse(atob(fileContents)) : null;
-        break;
-    }
-    return {
-      name: PathExt.basename(path),
-      path: path,
-      format: fileType.fileFormat,
-      type: 'file',
-      created: '',
-      writable: false,
-      last_modified: '',
-      mimetype: fileType.mimeTypes[0],
-      content
-    }
-  } else if (contents.type === 'dir') {
-    // If it is a directory, convert to that.
-    return {
-      name: PathExt.basename(path),
-      path: path,
-      format: 'json',
-      type: 'directory',
-      created: '',
-      writable: false,
-      last_modified: '',
-      mimetype: null,
-      content: null
-    }
-  }
+class GitHubRepo {
+  /**
+   * ID for the repository.
+   */
+  id: number;
+
+  /**
+   * The owner of the repository.
+   */
+  owner: any;
+
+  /**
+   * The name of the repository.
+   */
+  name: string;
+
+  /**
+   * The full name of the repository, including the owner name.
+   */
+  full_name: string;
+
+  /**
+   * A description of the repository.
+   */
+  description: string;
+
+  /**
+   * Whether the repository is private.
+   */
+  private: boolean;
+
+  /**
+   * Whether the repository is a fork.
+   */
+  fork: boolean;
+
+  /**
+   * The URL for the repository in the GitHub API.
+   */
+  url: string;
+
+  /**
+   * The URL for the repository in the GitHub UI.
+   */
+  html_url: string;
 }

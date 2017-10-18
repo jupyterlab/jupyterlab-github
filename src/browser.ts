@@ -44,19 +44,7 @@ class GitHubFileBrowser extends Widget {
     separator.node.textContent = '/';
     this._browser.toolbar.addItem('separator', separator);
 
-    let repoName = new GitHubEditableName(drive.repo, '<Edit Repository>');
-    repoName.addClass('jp-GitHubEditableRepoName');
-    repoName.node.title = 'Repository';
-    this._browser.toolbar.addItem('repository', repoName);
-
-    repoName.changed.connect(this._onRepoChanged, this);
     orgName.changed.connect(this._onOrgChanged, this);
-  }
-
-  private _onRepoChanged(sender: GitHubEditableName, args: IChangedArgs<string>) {
-    this._drive.repo = args.newValue;
-    this._browser.model.cd('');
-    this._browser.model.refresh();
   }
 
   private _onOrgChanged(sender: GitHubEditableName, args: IChangedArgs<string>) {

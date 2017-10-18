@@ -18,8 +18,8 @@ import {
 } from '@jupyterlab/services';
 
 import {
-  browserApiRequest, proxiedApiRequest, GITHUB_API, gitHubToJupyter,
-  GitHubBlob, GitHubFileContents, GitHubDirectoryListing
+  browserApiRequest, proxiedApiRequest, GITHUB_API, GitHubRepo,
+  GitHubContents, GitHubBlob, GitHubFileContents, GitHubDirectoryListing
 } from './github';
 
 
@@ -78,34 +78,6 @@ class GitHubDrive implements Contents.IDrive {
       return;
     }
     this._org = org;
-    this.repo = '';
-  }
-
-  /**
-   * The name of the current repository for the drive.
-   */
-  get repo(): string {
-    return this._repo;
-  }
-  set repo(repo: string) {
-    if (repo === this._repo) {
-      return;
-    }
-    this._repo = repo;
-    this.branch = '';
-  }
-
-  /**
-   * The name of the current branch for the drive.
-   */
-  get branch(): string {
-    return this._branch;
-  }
-  set branch(branch: string) {
-    if (branch === this._branch) {
-      return;
-    }
-    this._branch = branch;
   }
 
   /**
@@ -150,12 +122,29 @@ class GitHubDrive implements Contents.IDrive {
    * @returns A promise which resolves with the file content.
    */
   get(path: string, options?: Contents.IFetchOptions): Promise<Contents.IModel> {
-    if (this._org === '' || this._repo === '') {
+    // If the org has not been set, return an empty directory
+    // placeholder.
+    if (this._org === '') {
       return Promise.resolve(Private.DummyDirectory);
     }
-    const apiPath = URLExt.join('repos', this._org, this._repo, 'contents', path);
-    return this._apiRequest<any>(apiPath).then(contents => {
-      return gitHubToJupyter(path, contents, this._fileTypeForPath);
+
+    // If the org has been set and the path is empty, list
+    // the repositories for the org.
+    if (this._org !== '' && path === '') {
+      const apiPath = URLExt.join('orgs', this._org, 'repos');
+      return this._apiRequest<GitHubRepo[]>(apiPath).then(repos => {
+        return Private.reposToDirectory(repos);
+      });
+    }
+
+    // Otherwise identify the repository and get the contents of the
+    // appropriate resource.
+    const repo = path.split('/')[0];
+    const repoPath = URLExt.join(...path.split('/').slice(1));
+    const apiPath = URLExt.join('repos', this._org, repo, 'contents', repoPath);
+    return this._apiRequest<GitHubContents>(apiPath).then(contents => {
+      return Private.gitHubContentsToJupyterContents(
+        path, contents, this._fileTypeForPath);
     }).catch(response => {
       if(response.xhr.status === 404) {
         console.warn('GitHub: cannot find org/repo. '+
@@ -312,11 +301,13 @@ class GitHubDrive implements Contents.IDrive {
     let blobData: GitHubFileContents;
     // Get the contents of the parent directory so that we can
     // get the sha of the blob.
-    const dirname = PathExt.dirname(path);
-    const dirApiPath = URLExt.join('repos', this._org, this._repo, 'contents', dirname);
+    const repo = path.split('/')[0];
+    const repoPath = URLExt.join(...path.split('/').slice(1));
+    const dirname = PathExt.dirname(repoPath);
+    const dirApiPath = URLExt.join('repos', this._org, repo, 'contents', dirname);
     return this._apiRequest<GitHubDirectoryListing>(dirApiPath).then(dirContents => {
       for (let item of dirContents) {
-        if (item.path === path) {
+        if (item.path === repoPath) {
           blobData = item as GitHubFileContents;
           return item.sha;
         }
@@ -325,12 +316,13 @@ class GitHubDrive implements Contents.IDrive {
     }).then(sha => {
       //Once we have the sha, form the api url and make the request.
       const blobApiPath = URLExt.join(
-        'repos', this._org, this._repo, 'git', 'blobs', sha);
+        'repos', this._org, repo, 'git', 'blobs', sha);
       return this._apiRequest<GitHubBlob>(blobApiPath);
     }).then(blob => {
       //Convert the data to a Contents.IModel.
       blobData.content = blob.content;
-      return gitHubToJupyter(path, blobData, this._fileTypeForPath);
+      return Private.gitHubContentsToJupyterContents(
+        path, blobData, this._fileTypeForPath);
     });
   }
 
@@ -338,11 +330,11 @@ class GitHubDrive implements Contents.IDrive {
    * Determine whether to make the call via the
    * notebook server proxy or not.
    */
-  private _apiRequest<T>(path: string): Promise<T> {
+  private _apiRequest<T>(apiPath: string): Promise<T> {
     if (this._useProxy === true) {
-      return proxiedApiRequest<T>(path, this._serverSettings);
+      return proxiedApiRequest<T>(apiPath, this._serverSettings);
     } else {
-      return browserApiRequest(path);
+      return browserApiRequest(apiPath);
     }
   }
 
@@ -352,10 +344,11 @@ class GitHubDrive implements Contents.IDrive {
   private _isDisposed = false;
   private _fileChanged = new Signal<this, Contents.IChangedArgs>(this);
   private _org = '';
-  private _repo = '';
-  private _branch = '';
 }
 
+/**
+ * Private namespace for utility functions.
+ */
 namespace Private {
   export
   const DummyDirectory: Contents.IModel = {
@@ -369,4 +362,119 @@ namespace Private {
     last_modified: '',
     mimetype: null,
   };
+
+  /**
+   * Given a JSON GitHubContents object returned by the GitHub API v3,
+   * convert it to the Jupyter Contents.IModel.
+   *
+   * @param path - the path to the contents model in the repository.
+   *
+   * @param contents - the GitHubContents object.
+   *
+   * @param fileTypeForPath - a function that, given a path, returns
+   *   a DocumentRegistry.IFileType, used by JupyterLab to identify different
+   *   openers, icons, etc.
+   *
+   * @returns a Contents.IModel object.
+   */
+  export
+  function gitHubContentsToJupyterContents(path: string, contents: GitHubContents | GitHubContents[], fileTypeForPath: (path: string) => DocumentRegistry.IFileType): Contents.IModel {
+    if (Array.isArray(contents)) {
+      // If we have an array, it is a directory of GitHubContents.
+      // Iterate over that and convert all of the items in the array/
+      return {
+        name: PathExt.basename(path),
+        path: path,
+        format: 'json',
+        type: 'directory',
+        writable: false,
+        created: '',
+        last_modified: '',
+        mimetype: null,
+        content: contents.map( c => {
+          return gitHubContentsToJupyterContents(
+            PathExt.join(path, c.name), c, fileTypeForPath);
+        })
+      } as Contents.IModel;
+    } else if (contents.type === 'file') {
+      // If it is a file or blob, convert to a file
+      const fileType = fileTypeForPath(path);
+      const fileContents = (contents as GitHubFileContents).content;
+      let content: any;
+      switch (fileType.fileFormat) {
+        case 'text':
+          content = fileContents ? atob(fileContents) : null;
+          break;
+        case 'base64':
+          content = fileContents || null;
+          break;
+        case 'json':
+          content = fileContents ? JSON.parse(atob(fileContents)) : null;
+          break;
+      }
+      return {
+        name: PathExt.basename(path),
+        path: path,
+        format: fileType.fileFormat,
+        type: 'file',
+        created: '',
+        writable: false,
+        last_modified: '',
+        mimetype: fileType.mimeTypes[0],
+        content
+      }
+    } else if (contents.type === 'dir') {
+      // If it is a directory, convert to that.
+      return {
+        name: PathExt.basename(path),
+        path: path,
+        format: 'json',
+        type: 'directory',
+        created: '',
+        writable: false,
+        last_modified: '',
+        mimetype: null,
+        content: null
+      }
+    }
+  }
+
+  /**
+   * Given an array of JSON GitHubRepo objects returned by the GitHub API v3,
+   * convert it to the Jupyter Contents.IModel conforming to a directory of
+   * those repositories.
+   *
+   * @param repo - the GitHubRepo object.
+   *
+   * @returns a Contents.IModel object.
+   */
+  export
+  function reposToDirectory(repos: GitHubRepo[]): Contents.IModel {
+    // If it is a directory, convert to that.
+    let content: Contents.IModel[] = repos.map( repo => {
+      return {
+        name: repo.name,
+        path: repo.name,
+        format: 'json',
+        type: 'directory',
+        created: '',
+        writable: false,
+        last_modified: '',
+        mimetype: null,
+        content: null
+      } as Contents.IModel;
+    });
+
+    return {
+      name: '',
+      path: '',
+      format: 'json',
+      type: 'directory',
+      created: '',
+      last_modified: '',
+      writable: false,
+      mimetype: null,
+      content
+    };
+  }
 }
