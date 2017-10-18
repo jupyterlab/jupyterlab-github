@@ -34,23 +34,21 @@ class GitHubFileBrowser extends Widget {
     this._browser = browser;
     this._drive = drive;
 
+    const orgLabel = new Widget();
+    orgLabel.addClass('jp-GitHubOrgLabel');
+    orgLabel.node.textContent = 'Org:';
+    this._browser.toolbar.addItem('label', orgLabel);
+
     let orgName = new GitHubEditableName(drive.org, '<Edit Organization>');
     orgName.addClass('jp-GitHubEditableOrgName');
     orgName.node.title = 'Organization';
     this._browser.toolbar.addItem('organization', orgName);
-
-    let separator = new Widget();
-    separator.addClass('jp-GitHubSeparator');
-    separator.node.textContent = '/';
-    this._browser.toolbar.addItem('separator', separator);
-
     orgName.changed.connect(this._onOrgChanged, this);
   }
 
   private _onOrgChanged(sender: GitHubEditableName, args: IChangedArgs<string>) {
     this._drive.org = args.newValue;
-    this._browser.model.cd('');
-    this._browser.model.refresh();
+    this._browser.model.cd('/').then( () => { this._browser.model.refresh() });
   }
 
   private _browser: FileBrowser;

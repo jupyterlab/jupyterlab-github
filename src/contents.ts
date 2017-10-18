@@ -131,10 +131,7 @@ class GitHubDrive implements Contents.IDrive {
     // If the org has been set and the path is empty, list
     // the repositories for the org.
     if (this._org !== '' && path === '') {
-      const apiPath = URLExt.join('orgs', this._org, 'repos');
-      return this._apiRequest<GitHubRepo[]>(apiPath).then(repos => {
-        return Private.reposToDirectory(repos);
-      });
+      return this._listRepos();
     }
 
     // Otherwise identify the repository and get the contents of the
@@ -323,6 +320,22 @@ class GitHubDrive implements Contents.IDrive {
       blobData.content = blob.content;
       return Private.gitHubContentsToJupyterContents(
         path, blobData, this._fileTypeForPath);
+    });
+  }
+
+  private _listRepos(): Promise<Contents.IModel> {
+    return new Promise<Contents.IModel>((resolve, reject) => {
+      // Try to find it under orgs.
+      const apiOrgPath = URLExt.join('orgs', this._org, 'repos');
+      this._apiRequest<GitHubRepo[]>(apiOrgPath).then(repos => {
+        resolve(Private.reposToDirectory(repos));
+      }).catch(() => {
+        // If that fails, try to find it under users.
+        const apiUserPath = URLExt.join('users', this._org, 'repos');
+        this._apiRequest<GitHubRepo[]>(apiUserPath).then(repos => {
+          resolve(Private.reposToDirectory(repos));
+        });
+      });
     });
   }
 
