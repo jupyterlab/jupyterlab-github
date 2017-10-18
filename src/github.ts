@@ -17,11 +17,16 @@ export
 const GITHUB_API = 'https://api.github.com';
 
 /**
- * Make a request to the GitHub API.
+ * Make a client-side request to the GitHub API.
+ *
+ * @param url - the api path for the GitHub API v3
+ *   (not including the base url).
+ *
+ * @returns a Promise resolved with the JSON response.
  */
 export
-function apiRequest<T>(url: string): Promise<T> {
-  return new Promise( (resolve, reject)=>{
+function browserApiRequest<T>(url: string): Promise<T> {
+  return new Promise((resolve, reject) => {
     const method = 'GET';
     const requestUrl = URLExt.join(GITHUB_API, url);
     let xhr = new XMLHttpRequest();
@@ -30,32 +35,50 @@ function apiRequest<T>(url: string): Promise<T> {
       if (xhr.status >= 200 && xhr.status < 300) {
         resolve(JSON.parse(xhr.response));
       } else {
-        reject({
-          status: xhr.status,
-          responseText: xhr.statusText
-        });
+        const err: ServerConnection.IError = {
+          xhr,
+          settings: undefined,
+          request: undefined,
+          event: undefined,
+          message: xhr.responseText
+        };
+        reject(err);
       }
     };
-    xhr.onerror = ()=>{
-      reject({
-        status: xhr.status,
-        responseText: xhr.statusText
-      });
+    xhr.onerror = () => {
+      const err: ServerConnection.IError = {
+        xhr,
+        settings: undefined,
+        request: undefined,
+        event: undefined,
+        message: xhr.responseText
+      };
+      reject(err);
     };
     xhr.send();
   });
 }
 
+/**
+ * Make a request to the notebook server proxy for the
+ * GitHub API.
+ *
+ * @param url - the api path for the GitHub API v3
+ *   (not including the base url)
+ *
+ * @param settings - the settings for the current notebook server.
+ *
+ * @returns a Promise resolved with the JSON response.
+ */
 export
-function proxiedApiRequest<T>(url: string): Promise<T> {
-  const serverSettings = ServerConnection.makeSettings();
+function proxiedApiRequest<T>(url: string, settings: ServerConnection.ISettings): Promise<T> {
   let request = {
     url: 'github/'+url,
     method: 'GET',
     cache: true
   };
 
-  return ServerConnection.makeRequest(request, serverSettings).then(response => {
+  return ServerConnection.makeRequest(request, settings).then(response => {
     if (response.xhr.status !== 200) {
       throw ServerConnection.makeError(response);
     }
