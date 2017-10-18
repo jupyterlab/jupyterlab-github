@@ -63,8 +63,11 @@ function activateFileBrowser(app: JupyterLab, manager: IDocumentManager, factory
   gitHubBrowser.id = 'github-file-browser';
 
   // See if we have an org cached in the IStateDB.
+  // Warning: there is a potential race condition here: if the filebrowser
+  // tries to restore its directory before the org is reset, we will
+  // overwrite that cwd. Otherwise we will not.
   const id = NAMESPACE;
-  Promise.all([state.fetch(id), app.restored]).then(([args]) => {
+  state.fetch(id).then(args => {
     const org = (args && args['org'] as string) || '';
     gitHubBrowser.orgName.name = org;
   });
