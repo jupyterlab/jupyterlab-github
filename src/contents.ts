@@ -174,7 +174,29 @@ class GitHubDrive implements Contents.IDrive {
    * path if necessary.
    */
   getDownloadUrl(path: string): Promise<string> {
-    return Promise.reject('Repository is read only');
+    // Error if the org has not been set
+    if (this._org === '') {
+      return Promise.reject('GitHub: no active organization');
+    }
+
+    // Error if there is no path.
+    if (path === '') {
+      return Promise.reject('GitHub: No file selected');
+    }
+
+    // Otherwise identify the repository and get the url of the
+    // appropriate resource.
+    const repo = path.split('/')[0];
+    const repoPath = URLExt.join(...path.split('/').slice(1));
+    const dirname = PathExt.dirname(repoPath);
+    const dirApiPath = URLExt.join('repos', this._org, repo, 'contents', dirname);
+    return this._apiRequest<GitHubDirectoryListing>(dirApiPath).then(dirContents => {
+      for (let item of dirContents) {
+        if (item.path === repoPath) {
+          return item.download_url;
+        }
+      }
+    });
   }
 
   /**
