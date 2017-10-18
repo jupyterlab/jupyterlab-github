@@ -44,7 +44,9 @@ class GitHubHandler(APIHandler):
             # apply them to the request.
             if c.client_id != '' and c.client_secret != '':
                 api_path = url_concat(api_path,
-                    {'client_id': c.client_id, 'client_secret': c.client_secret})
+                    {'client_id': c.client_id,\
+                     'client_secret': c.client_secret,\
+                     'per_page': 100})
             client = HTTPClient()
             request = HTTPRequest(api_path, user_agent='JupyterLab GitHub')
             response = client.fetch(request)
