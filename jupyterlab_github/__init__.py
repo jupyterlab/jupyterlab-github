@@ -1,3 +1,5 @@
+import re, json
+
 import tornado.gen as gen
 from tornado.httputil import url_concat
 from tornado.httpclient import AsyncHTTPClient, HTTPRequest, HTTPError
@@ -9,6 +11,7 @@ from notebook.utils import url_path_join
 from notebook.base.handlers import APIHandler
 
 path_regex = r'(?P<path>(?:(?:/[^/]+)+|/?))'
+link_regex = re.compile(r'<([^>]*)>;\s*rel="([\w]*)\"')
 GITHUB_API = 'https://api.github.com'
 
 class GitHubConfig(Configurable):
@@ -51,10 +54,38 @@ class GitHubHandler(APIHandler):
             client = AsyncHTTPClient()
             request = HTTPRequest(api_path, user_agent='JupyterLab GitHub')
             response = yield client.fetch(request)
-            self.finish(response.body)
+            data = json.loads(response.body)
+
+            # Check if we need to paginate results.
+            # If so, get pages until all the results
+            # are loaded into the data buffer.
+            next_page_path = self._maybe_get_next_page_path(response)
+            while next_page_path:
+                request = HTTPRequest(next_page_path, user_agent='JupyterLab GitHub')
+                response = yield client.fetch(request)
+                next_page_path = self._maybe_get_next_page_path(response)
+                data.extend(json.loads(response.body))
+
+            # Send the results back.
+            self.finish(json.dumps(data))
+
         except HTTPError as err:
             self.set_status(err.code)
             self.finish(err.response.body);
+
+    def _maybe_get_next_page_path(self, response):
+        # If there is a 'Link' header in the response, we
+        # need to paginate.
+        link_headers = response.headers.get_list('Link')
+        next_page_path = None
+        if link_headers:
+            links = {}
+            matched = link_regex.findall(link_headers[0])
+            for match in matched:
+                links[match[1]] = match[0]
+            next_page_path = links.get('next', None)
+
+        return next_page_path
 
 def _jupyter_server_extension_paths():
     return [{
