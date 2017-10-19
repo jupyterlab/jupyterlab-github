@@ -62,18 +62,18 @@ function activateFileBrowser(app: JupyterLab, manager: IDocumentManager, factory
   gitHubBrowser.title.iconClass = 'jp-GitHub-tablogo';
   gitHubBrowser.id = 'github-file-browser';
 
-  // See if we have an org cached in the IStateDB.
+  // See if we have an user cached in the IStateDB.
   // Warning: there is a potential race condition here: if the filebrowser
-  // tries to restore its directory before the org is reset, we will
+  // tries to restore its directory before the user is reset, we will
   // overwrite that cwd. Otherwise we will not.
   const id = NAMESPACE;
   state.fetch(id).then(args => {
-    const org = (args && args['org'] as string) || '';
-    gitHubBrowser.orgName.name = org;
+    const user = (args && args['user'] as string) || '';
+    gitHubBrowser.userName.name.set(user);
   });
   // Keep the IStateDB updated.
-  gitHubBrowser.orgName.changed.connect((sender, args) => {
-    state.save(id, { org: args.newValue });
+  gitHubBrowser.userName.name.changed.connect((sender, args) => {
+    state.save(id, { user: args.newValue });
   });
 
   // Add the file browser widget to the application restorer.

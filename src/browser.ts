@@ -2,15 +2,11 @@
 // Distributed under the terms of the Modified BSD License.
 
 import {
-  Signal, ISignal
-} from '@phosphor/signaling';
-
-import {
   PanelLayout, Widget
 } from '@phosphor/widgets';
 
 import {
-  IChangedArgs
+  ObservableValue
 } from '@jupyterlab/coreutils';
 
 import {
@@ -34,32 +30,91 @@ class GitHubFileBrowser extends Widget {
     this._browser = browser;
     this._drive = drive;
 
-    const orgLabel = new Widget();
-    orgLabel.addClass('jp-GitHubOrgLabel');
-    orgLabel.node.textContent = 'Org:';
-    this._browser.toolbar.addItem('label', orgLabel);
+    const userLabel = new Widget();
+    userLabel.addClass('jp-GitHubUserLabel');
+    userLabel.node.textContent = 'User:';
+    this._browser.toolbar.addItem('label', userLabel);
 
-    this.orgName = new GitHubEditableName(drive.org, '<Edit Organization>');
-    this.orgName.addClass('jp-GitHubEditableOrgName');
-    this.orgName.node.title = 'Organization';
-    this._browser.toolbar.addItem('organization', this.orgName);
-    this.orgName.changed.connect(this._onOrgChanged, this);
+    this.userName = new GitHubEditableName(drive.user, '<Edit User>');
+    this.userName.addClass('jp-GitHubEditableUserName');
+    this.userName.node.title = 'User';
+    this._browser.toolbar.addItem('user', this.userName);
+    this.userName.name.changed.connect(this._onUserChanged, this);
+
+    this._drive.rateLimitedState.changed.connect(this._updateErrorPanel, this);
+    this._drive.validUserState.changed.connect(this._updateErrorPanel, this);
   }
 
   /**
-   * An editable widget hosting the current org name.
+   * An editable widget hosting the current user name.
    */
-  readonly orgName: GitHubEditableName;
+  readonly userName: GitHubEditableName;
 
-  private _onOrgChanged(sender: GitHubEditableName, args: IChangedArgs<string>) {
-    this._drive.org = args.newValue;
-    this._browser.model.cd('/').then( () => { this._browser.model.refresh() });
+  /**
+   * React to a change in user.
+   */
+  private _onUserChanged(sender: ObservableValue, args: ObservableValue.IChangedArgs) {
+    this._drive.user = args.newValue as string;
+    // After the user has been changed, cd to their GitHub
+    // root directory, since any previous directory is no
+    // longer valid.
+    this._browser.model.cd('/').then(() => {
+      // Once we have the new listing, maybe give the file listing
+      // focus. Once the input element is removed, the active element
+      // appears to revert to document.body. If the user has subsequently
+      // focused another element, don't focus the browser listing.
+      if (document.activeElement === document.body) {
+        const listing = (this._browser.layout as PanelLayout).widgets[2];
+        listing.node.focus();
+      }
+    });
+  }
+
+  /**
+   * React to a change in the validity of the drive.
+   */
+  private _updateErrorPanel(): void {
+    const rateLimited = this._drive.rateLimitedState.get();
+    const validUser = this._drive.validUserState.get();
+    // If everythings is valid, and an error panel is showing, remove it.
+    if (!rateLimited && validUser && this._errorPanel) {
+      const listing = (this._browser.layout as PanelLayout).widgets[2];
+      listing.node.removeChild(this._errorPanel.node);
+      this._errorPanel.dispose();
+      this._errorPanel = null;
+    }
+
+    // If we are being rate limited and there is not error panel, make one.
+    if (rateLimited && !this._errorPanel) {
+      this._errorPanel = new GitHubErrorPanel(
+        'You have been rate limited by GitHub! '+
+        'You will need to wait about an hour before '+
+        'continuing');
+      const listing = (this._browser.layout as PanelLayout).widgets[2];
+      listing.node.appendChild(this._errorPanel.node);
+    }
+
+    // If we have an invalid user there is not error panel, make one.
+    if (!validUser && !this._errorPanel) {
+      const message = this._drive.user ?
+        `"${this._drive.user}" appears to be an invalid user name!` :
+        'Please enter a GitHub user name';
+      this._errorPanel = new GitHubErrorPanel(message);
+      const listing = (this._browser.layout as PanelLayout).widgets[2];
+      listing.node.appendChild(this._errorPanel.node);
+    }
   }
 
   private _browser: FileBrowser;
   private _drive: GitHubDrive;
+  private _errorPanel: GitHubErrorPanel | null;
 }
 
+/**
+ * A widget that hosts an editable field,
+ * used to host the currently active GitHub
+ * user name.
+ */
 export
 class GitHubEditableName extends Widget {
   constructor(initialName: string = '', placeholder?: string) {
@@ -72,61 +127,66 @@ class GitHubEditableName extends Widget {
     this._placeholder = placeholder || '<Edit Name>'
 
     this.node.appendChild(this._nameNode);
-    this.name = initialName;
+    this.name = new ObservableValue(initialName);
+    this._nameNode.textContent = initialName || this._placeholder;
 
     this.node.onclick = () => {
       if (this._pending) {
         return;
       }
       this._pending = true;
-      const oldValue = this.name;
       Private.changeField(this._nameNode, this._editNode).then(value => {
         this._pending = false;
-        if (oldValue === value) {
-          return;
-        }
-        this._name = value;
-        this._changed.emit({
-          name: 'name',
-          oldValue,
-          newValue: value
-        });
+        this.name.set(value);
       });
-    }
-  }
+    };
 
-  get name(): string {
-    return this._name;
-  }
-  set name(value: string) {
-    const oldValue = this.name;
-    if (oldValue === value) {
-      return;
-    }
-    this._name = value;
-    this._nameNode.textContent = value || this._placeholder;
-    this._changed.emit({
-      name: 'name',
-      oldValue,
-      newValue: value
+    this.name.changed.connect((s, args) => {
+      if (args.oldValue !== args.newValue) {
+        this._nameNode.textContent =
+          args.newValue as string || this._placeholder;
+      }
     });
   }
 
-  get changed(): ISignal<this, IChangedArgs<string>> {
-    return this._changed;
-  }
+  /**
+   * The current name of the field.
+   */
+  readonly name: ObservableValue;
 
 
-  private _changed = new Signal<this, IChangedArgs<string>>(this);
-  private _name: string;
   private _pending  = false;
   private _placeholder: string;
   private _nameNode: HTMLElement;
   private _editNode: HTMLInputElement;
 }
 
+/**
+ * A widget hosting an error panel for the browser,
+ * used if there is an invalid user name or if we
+ * are being rate-limited.
+ */
+export
+class GitHubErrorPanel extends Widget {
+  constructor(message: string) {
+    super();
+    this.addClass('jp-GitHubErrorPanel');
+    const image = document.createElement('div');
+    const text = document.createElement('div');
+    image.className = 'jp-GitHubErrorImage';
+    text.className = 'jp-GitHubErrorText';
+    text.textContent = message;
+    this.node.appendChild(image);
+    this.node.appendChild(text);
+  }
+}
 
 
+
+
+/**
+ * A module-Private namespace.
+ */
 namespace Private {
   export
   /**

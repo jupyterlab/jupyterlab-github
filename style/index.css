@@ -20,7 +20,7 @@
   height: 100%;
 }
 
-.jp-GitHubBrowser .jp-GitHubOrgLabel {
+.jp-GitHubBrowser .jp-GitHubUserLabel {
   width: auto;
   text-align: left;
   font-size: large;
@@ -64,4 +64,32 @@
 
 .jp-GitHubBrowser .jp-DirListing-itemModified {
   display: none;
+}
+
+.jp-GitHubErrorPanel {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--jp-layout-color2);
+}
+
+.jp-GitHubErrorImage {
+  background-size: 100%;
+  width: 200px;
+  height: 165px;
+  background-image: url(octocat_error.png);
+}
+
+.jp-GitHubErrorText {
+  font-size: var(--jp-ui-font-size3);
+  color: var(--jp-ui-font-color1);
+  text-align: center;
+  padding: 12px;
 }
