@@ -350,19 +350,13 @@ class GitHubDrive implements Contents.IDrive {
   private _listRepos(): Promise<Contents.IModel> {
     return new Promise<Contents.IModel>((resolve, reject) => {
       // Try to find it under orgs.
-      const apiOrgPath = URLExt.join('orgs', this._org, 'repos');
-      this._apiRequest<GitHubRepo[]>(apiOrgPath).then(repos => {
+      const apiPath = URLExt.join('users', this._org, 'repos');
+      this._apiRequest<GitHubRepo[]>(apiPath).then(repos => {
         resolve(Private.reposToDirectory(repos));
       }).catch(() => {
-        // If that fails, try to find it under users.
-        const apiUserPath = URLExt.join('users', this._org, 'repos');
-        this._apiRequest<GitHubRepo[]>(apiUserPath).then(repos => {
-          resolve(Private.reposToDirectory(repos));
-        }).catch(() => {
-          console.warn('GitHub: cannot find org. '+
-                       'Perhaps you misspelled something?');
-          resolve(Private.DummyDirectory);
-        });
+        console.warn('GitHub: cannot find org. '+
+                     'Perhaps you misspelled something?');
+        resolve(Private.DummyDirectory);
       });
     });
   }
