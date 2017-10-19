@@ -6,7 +6,7 @@ import {
 } from '@phosphor/signaling';
 
 import {
-  PathExt, URLExt
+  ObservableValue, PathExt, URLExt
 } from '@jupyterlab/coreutils';
 
 import {
@@ -51,13 +51,17 @@ class GitHubDrive implements Contents.IDrive {
       proxiedApiRequest<any>('', this._serverSettings).then(() => {
         resolve(true);
       }).catch(() => {
-        console.warn('The JupyterLab Github server extension appears '+
+        console.warn('The JupyterLab GitHub server extension appears '+
                      'to be missing. If you do not install it with application '+
                      'credentials, you are likely to be rate limited by GitHub '+
                      'very quickly');
         resolve(false);
       });
     });
+
+    // Initialize the two valid-drive observables.
+    this.validUserState = new ObservableValue(true);
+    this.rateLimitedState = new ObservableValue(false);
   }
 
   /**
@@ -70,17 +74,24 @@ class GitHubDrive implements Contents.IDrive {
   readonly serverSettings: ServerConnection.ISettings;
 
   /**
-   * The name of the current organization for the drive.
+   * The name of the current GitHub user for the drive.
    */
-  get org(): string {
-    return this._org;
+  get user(): string {
+    return this._user;
   }
-  set org(org: string) {
-    if (org === this._org) {
-      return;
-    }
-    this._org = org;
+  set user(user: string) {
+    this._user = user;
   }
+
+  /**
+   * State for whether the user valid.
+   */
+  readonly validUserState: ObservableValue;
+
+  /**
+   * State for whether the drive is being rate limited by GitHub.
+   */
+  readonly rateLimitedState: ObservableValue;
 
   /**
    * A signal emitted when a file operation takes place.
@@ -126,13 +137,14 @@ class GitHubDrive implements Contents.IDrive {
   get(path: string, options?: Contents.IFetchOptions): Promise<Contents.IModel> {
     // If the org has not been set, return an empty directory
     // placeholder.
-    if (this._org === '') {
+    if (this._user === '') {
+      this.validUserState.set(false);
       return Promise.resolve(Private.DummyDirectory);
     }
 
     // If the org has been set and the path is empty, list
     // the repositories for the org.
-    if (this._org !== '' && path === '') {
+    if (this._user !== '' && path === '') {
       return this._listRepos();
     }
 
@@ -140,21 +152,30 @@ class GitHubDrive implements Contents.IDrive {
     // appropriate resource.
     const repo = path.split('/')[0];
     const repoPath = URLExt.join(...path.split('/').slice(1));
-    const apiPath = URLExt.join('repos', this._org, repo, 'contents', repoPath);
+    const apiPath = URLExt.join('repos', this._user, repo, 'contents', repoPath);
     return this._apiRequest<GitHubContents>(apiPath).then(contents => {
+      // Set the states
+      this.validUserState.set(true);
+      this.rateLimitedState.set(false);
+
       return Private.gitHubContentsToJupyterContents(
         path, contents, this._fileTypeForPath);
     }).catch(response => {
       if(response.xhr.status === 404) {
         console.warn('GitHub: cannot find org/repo. '+
                      'Perhaps you misspelled something?');
+        this.validUserState.set(false);
         return Private.DummyDirectory;
       } else if (response.xhr.status === 403 &&
                  response.xhr.responseText.indexOf('rate limit') !== -1) {
+        this.rateLimitedState.set(true);
         console.error(response.message);
         return Promise.reject(response);
       } else if (response.xhr.status === 403 &&
                  response.xhr.responseText.indexOf('blob') !== -1) {
+        // Set the states
+        this.validUserState.set(true);
+        this.rateLimitedState.set(false);
         return this._getBlob(path);
       } else {
         console.error(response.message);
@@ -175,7 +196,7 @@ class GitHubDrive implements Contents.IDrive {
    */
   getDownloadUrl(path: string): Promise<string> {
     // Error if the org has not been set
-    if (this._org === '') {
+    if (this._user === '') {
       return Promise.reject('GitHub: no active organization');
     }
 
@@ -189,7 +210,7 @@ class GitHubDrive implements Contents.IDrive {
     const repo = path.split('/')[0];
     const repoPath = URLExt.join(...path.split('/').slice(1));
     const dirname = PathExt.dirname(repoPath);
-    const dirApiPath = URLExt.join('repos', this._org, repo, 'contents', dirname);
+    const dirApiPath = URLExt.join('repos', this._user, repo, 'contents', dirname);
     return this._apiRequest<GitHubDirectoryListing>(dirApiPath).then(dirContents => {
       for (let item of dirContents) {
         if (item.path === repoPath) {
@@ -325,7 +346,7 @@ class GitHubDrive implements Contents.IDrive {
     const repo = path.split('/')[0];
     const repoPath = URLExt.join(...path.split('/').slice(1));
     const dirname = PathExt.dirname(repoPath);
-    const dirApiPath = URLExt.join('repos', this._org, repo, 'contents', dirname);
+    const dirApiPath = URLExt.join('repos', this._user, repo, 'contents', dirname);
     return this._apiRequest<GitHubDirectoryListing>(dirApiPath).then(dirContents => {
       for (let item of dirContents) {
         if (item.path === repoPath) {
@@ -337,7 +358,7 @@ class GitHubDrive implements Contents.IDrive {
     }).then(sha => {
       //Once we have the sha, form the api url and make the request.
       const blobApiPath = URLExt.join(
-        'repos', this._org, repo, 'git', 'blobs', sha);
+        'repos', this._user, repo, 'git', 'blobs', sha);
       return this._apiRequest<GitHubBlob>(blobApiPath);
     }).then(blob => {
       //Convert the data to a Contents.IModel.
@@ -347,22 +368,27 @@ class GitHubDrive implements Contents.IDrive {
     });
   }
 
+  /**
+   * List the repositories for the currently active user.
+   */
   private _listRepos(): Promise<Contents.IModel> {
     return new Promise<Contents.IModel>((resolve, reject) => {
       // Try to find it under orgs.
-      const apiOrgPath = URLExt.join('orgs', this._org, 'repos');
-      this._apiRequest<GitHubRepo[]>(apiOrgPath).then(repos => {
+      const apiPath = URLExt.join('users', this._user, 'repos');
+      this._apiRequest<GitHubRepo[]>(apiPath).then(repos => {
+        this.validUserState.set(true);
+        this.rateLimitedState.set(false);
         resolve(Private.reposToDirectory(repos));
-      }).catch(() => {
-        // If that fails, try to find it under users.
-        const apiUserPath = URLExt.join('users', this._org, 'repos');
-        this._apiRequest<GitHubRepo[]>(apiUserPath).then(repos => {
-          resolve(Private.reposToDirectory(repos));
-        }).catch(() => {
-          console.warn('GitHub: cannot find org. '+
+      }).catch((response) => {
+        if (response.xhr.status === 403 &&
+            response.xhr.responseText.indexOf('rate limit') !== -1) {
+          this.rateLimitedState.set(true);
+        } else {
+          console.warn('GitHub: cannot find user. '+
                        'Perhaps you misspelled something?');
-          resolve(Private.DummyDirectory);
-        });
+          this.validUserState.set(false);
+        }
+        resolve(Private.DummyDirectory);
       });
     });
   }
@@ -386,7 +412,7 @@ class GitHubDrive implements Contents.IDrive {
   private _fileTypeForPath: (path: string) => DocumentRegistry.IFileType;
   private _isDisposed = false;
   private _fileChanged = new Signal<this, Contents.IChangedArgs>(this);
-  private _org = '';
+  private _user = '';
 }
 
 /**
