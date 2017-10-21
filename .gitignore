@@ -1,4 +1,7 @@
 *.bundle.*
+dist/
+jupyterlab_github.egg-info/
+jupyterlab_github/__pycache__/
 lib/
 test/build/*
 node_modules/
