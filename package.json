@@ -1,5 +1,5 @@
 {
-  "name": "jupyterlab-github",
+  "name": "@jupyterlab/github",
   "version": "0.1.0",
   "description": "JupyterLab viewer for GitHub repositories",
   "author": "Ian Rose",
@@ -46,11 +46,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/ian-r-rose/jupyterlab-github.git"
+    "url": "https://github.com/jupyterlab/jupyterlab-github.git"
   },
   "license": "BSD-3-Clause",
   "bugs": {
-    "url": "https://github.com/ian-r-rose/jupyterlab-github/issues"
+    "url": "https://github.com/jupyterlab/jupyterlab-github/issues"
   },
-  "homepage": "https://github.com/ian-r-rose/jupyterlab-github"
+  "homepage": "https://github.com/jupyterlab/jupyterlab-github"
 }
