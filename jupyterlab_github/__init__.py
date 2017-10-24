@@ -7,7 +7,7 @@ from tornado.httpclient import AsyncHTTPClient, HTTPRequest, HTTPError
 from traitlets import Unicode
 from traitlets.config import Configurable
 
-from notebook.utils import url_path_join
+from notebook.utils import url_path_join, url_escape
 from notebook.base.handlers import APIHandler
 
 path_regex = r'(?P<path>(?:(?:/[^/]+)+|/?))'
@@ -43,7 +43,7 @@ class GitHubHandler(APIHandler):
         # Get access to the notebook config object
         c = GitHubConfig(config=self.config)
         try:
-            api_path = url_path_join(GITHUB_API, path)
+            api_path = url_path_join(GITHUB_API, url_escape(path))
             # If the config has client_id and client_secret set,
             # apply them to the request.
             if c.client_id != '' and c.client_secret != '':
