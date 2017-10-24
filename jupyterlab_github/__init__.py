@@ -54,7 +54,7 @@ class GitHubHandler(APIHandler):
             client = AsyncHTTPClient()
             request = HTTPRequest(api_path, user_agent='JupyterLab GitHub')
             response = yield client.fetch(request)
-            data = json.loads(response.body)
+            data = json.loads(response.body.decode('utf-8'))
 
             # Check if we need to paginate results.
             # If so, get pages until all the results
@@ -64,7 +64,7 @@ class GitHubHandler(APIHandler):
                 request = HTTPRequest(next_page_path, user_agent='JupyterLab GitHub')
                 response = yield client.fetch(request)
                 next_page_path = self._maybe_get_next_page_path(response)
-                data.extend(json.loads(response.body))
+                data.extend(json.loads(response.body.decode('utf-8')))
 
             # Send the results back.
             self.finish(json.dumps(data))
