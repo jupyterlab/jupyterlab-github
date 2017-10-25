@@ -152,7 +152,8 @@ class GitHubDrive implements Contents.IDrive {
     // appropriate resource.
     const repo = path.split('/')[0];
     const repoPath = URLExt.join(...path.split('/').slice(1));
-    const apiPath = URLExt.join('repos', this._user, repo, 'contents', repoPath);
+    const apiPath = URLExt.encodeParts(
+      URLExt.join('repos', this._user, repo, 'contents', repoPath));
     return this._apiRequest<GitHubContents>(apiPath).then(contents => {
       // Set the states
       this.validUserState.set(true);
@@ -210,7 +211,8 @@ class GitHubDrive implements Contents.IDrive {
     const repo = path.split('/')[0];
     const repoPath = URLExt.join(...path.split('/').slice(1));
     const dirname = PathExt.dirname(repoPath);
-    const dirApiPath = URLExt.join('repos', this._user, repo, 'contents', dirname);
+    const dirApiPath = URLExt.encodeParts(
+      URLExt.join('repos', this._user, repo, 'contents', dirname));
     return this._apiRequest<GitHubDirectoryListing>(dirApiPath).then(dirContents => {
       for (let item of dirContents) {
         if (item.path === repoPath) {
@@ -346,7 +348,8 @@ class GitHubDrive implements Contents.IDrive {
     const repo = path.split('/')[0];
     const repoPath = URLExt.join(...path.split('/').slice(1));
     const dirname = PathExt.dirname(repoPath);
-    const dirApiPath = URLExt.join('repos', this._user, repo, 'contents', dirname);
+    const dirApiPath = URLExt.encodeParts(
+      URLExt.join('repos', this._user, repo, 'contents', dirname));
     return this._apiRequest<GitHubDirectoryListing>(dirApiPath).then(dirContents => {
       for (let item of dirContents) {
         if (item.path === repoPath) {
@@ -357,8 +360,8 @@ class GitHubDrive implements Contents.IDrive {
       throw Error('Cannot find sha for blob');
     }).then(sha => {
       //Once we have the sha, form the api url and make the request.
-      const blobApiPath = URLExt.join(
-        'repos', this._user, repo, 'git', 'blobs', sha);
+      const blobApiPath = URLExt.encodeParts(URLExt.join(
+        'repos', this._user, repo, 'git', 'blobs', sha));
       return this._apiRequest<GitHubBlob>(blobApiPath);
     }).then(blob => {
       //Convert the data to a Contents.IModel.
@@ -374,7 +377,8 @@ class GitHubDrive implements Contents.IDrive {
   private _listRepos(): Promise<Contents.IModel> {
     return new Promise<Contents.IModel>((resolve, reject) => {
       // Try to find it under orgs.
-      const apiPath = URLExt.join('users', this._user, 'repos');
+      const apiPath = URLExt.encodeParts(
+        URLExt.join('users', this._user, 'repos'));
       this._apiRequest<GitHubRepo[]>(apiPath).then(repos => {
         this.validUserState.set(true);
         this.rateLimitedState.set(false);
