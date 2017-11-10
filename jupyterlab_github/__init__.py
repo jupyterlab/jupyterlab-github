@@ -10,7 +10,6 @@ from traitlets.config import Configurable
 from notebook.utils import url_path_join, url_escape
 from notebook.base.handlers import APIHandler
 
-path_regex = r'(?P<path>(?:(?:/[^/]+)+|/?))'
 link_regex = re.compile(r'<([^>]*)>;\s*rel="([\w]*)\"')
 GITHUB_API = 'https://api.github.com'
 
@@ -100,5 +99,7 @@ def load_jupyter_server_extension(nb_server_app):
         nb_server_app (NotebookWebApplication): handle to the Notebook webserver instance.
     """
     web_app = nb_server_app.web_app
-    host_pattern = '.*$'
-    web_app.add_handlers(host_pattern, [(r'/github%s' % path_regex, GitHubHandler)])
+    base_url = web_app.settings['base_url']
+    endpoint = url_path_join(base_url, 'github')
+    handlers = [(endpoint + "(.*)", GitHubHandler)]
+    web_app.add_handlers('.*$', handlers)
