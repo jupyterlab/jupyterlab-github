@@ -93,6 +93,11 @@
   background-image: url(binder.svg);
 }
 
+.jp-MyBinderButton-disabled {
+  opacity: 0.3;
+}
+
+
 .jp-GitHubBrowser .jp-GitHubIcon {
   flex: 1 1;
   background-image: url(octocat.png);
