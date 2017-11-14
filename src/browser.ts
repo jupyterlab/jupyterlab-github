@@ -6,7 +6,11 @@ import {
 } from '@phosphor/widgets';
 
 import {
-  ObservableValue
+  ToolbarButton
+} from '@jupyterlab/apputils';
+
+import {
+  ObservableValue, URLExt
 } from '@jupyterlab/coreutils';
 
 import {
@@ -16,6 +20,9 @@ import {
 import {
   GitHubDrive
 } from './contents';
+
+const MY_BINDER_BASE_URL = 'https://mybinder.org/v2/gh';
+const GITHUB_BASE_URL = 'https://github.com';
 
 /**
  * Widget for hosting the GitHub filebrowser.
@@ -30,16 +37,38 @@ class GitHubFileBrowser extends Widget {
     this._browser = browser;
     this._drive = drive;
 
-    const userLabel = new Widget();
-    userLabel.addClass('jp-GitHubUserLabel');
-    userLabel.node.textContent = 'User:';
-    this._browser.toolbar.addItem('label', userLabel);
-
     this.userName = new GitHubEditableName(drive.user, '<Edit User>');
     this.userName.addClass('jp-GitHubEditableUserName');
     this.userName.node.title = 'User';
     this._browser.toolbar.addItem('user', this.userName);
     this.userName.name.changed.connect(this._onUserChanged, this);
+
+    const openGitHubButton = new ToolbarButton({
+      onClick: () => {
+        const user = this._drive.user;
+        const path = this._browser.model.path;
+        const repo = path.split('/')[0].split(':')[1];
+        const repoPath = URLExt.join(...path.split('/').slice(1));
+        const url = URLExt.join(GITHUB_BASE_URL, user, repo,
+                                'tree', 'master', repoPath);
+        window.open(url);
+      },
+      className: 'jp-GitHubIcon',
+      tooltip: 'Open this repository on GitHub'
+    });
+    this._browser.toolbar.addItem('GitHub', openGitHubButton);
+
+    const launchBinderButton = new ToolbarButton({
+      onClick: () => {
+        const user = this._drive.user;
+        const repo = this._browser.model.path.split('/')[0].split(':')[1];
+        const url = URLExt.join(MY_BINDER_BASE_URL, user, repo, 'master'); 
+        window.open(url+'?urlpath=lab');
+      },
+      tooltip: 'Launch this repository on mybinder.org',
+      className: 'jp-MyBinderButton'
+    });
+    this._browser.toolbar.addItem('binder', launchBinderButton);
 
     this._drive.rateLimitedState.changed.connect(this._updateErrorPanel, this);
     this._drive.validUserState.changed.connect(this._updateErrorPanel, this);
@@ -182,8 +211,6 @@ class GitHubErrorPanel extends Widget {
 }
 
 
-
-
 /**
  * A module-Private namespace.
  */
@@ -202,13 +229,10 @@ namespace Private {
    *   or has been canceled.
    */
   function changeField(text: HTMLElement, edit: HTMLInputElement): Promise<string> {
-    // Replace the text node with an the input element,
-    // setting the value and width of the input element to
-    // the same as the text node.
+    // Replace the text node with an the input element.
     let parent = text.parentElement as HTMLElement;
     let initialValue = text.textContent;
     edit.value = initialValue;
-    parent.style.width = String(parent.offsetWidth+3)+'px';
     parent.replaceChild(edit, text);
     edit.focus();
 
@@ -222,10 +246,8 @@ namespace Private {
 
     return new Promise<string>((resolve, reject) => {
       edit.onblur = () => {
-        // Restore the correct width and set the
-        // text content of the original node, then
+        // Set the text content of the original node, then
         // replace the node.
-        parent.style.width = '';
         parent.replaceChild(text, edit);
         text.textContent = edit.value || initialValue;
         resolve(edit.value);

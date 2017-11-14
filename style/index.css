@@ -20,18 +20,12 @@
   height: 100%;
 }
 
-.jp-GitHubBrowser .jp-GitHubUserLabel {
-  width: auto;
-  text-align: left;
-  font-size: large;
-}
-
 .jp-GitHubBrowser .jp-GitHubEditableName {
-  width: auto;
   overflow: hidden;
   white-space: nowrap;
   text-align: center;
   font-size: large;
+  flex: 8 8;
 }
 
 .jp-GitHubBrowser .jp-GitHubEditableNameInput {
@@ -92,4 +86,14 @@
   color: var(--jp-ui-font-color1);
   text-align: center;
   padding: 12px;
+}
+
+.jp-MyBinderButton {
+  flex: 1 1;
+  background-image: url(binder.svg);
+}
+
+.jp-GitHubBrowser .jp-GitHubIcon {
+  flex: 1 1;
+  background-image: url(octocat.png);
 }
