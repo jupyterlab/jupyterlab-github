@@ -25,10 +25,20 @@
   white-space: nowrap;
   text-align: center;
   font-size: large;
+  padding: 0px;
   flex: 8 8;
 }
 
-.jp-GitHubBrowser .jp-GitHubEditableNameInput {
+.jp-GitHubBrowser .jp-GitHubEditableName-display {
+  border: 1px solid transparent;
+}
+
+.jp-GitHubBrowser .jp-GitHubEditableName-display:hover {
+  border: 1px solid var(--jp-border-color1);
+  box-shadow: 0px 0px 2px 0px rgba(0,0,0,0.24);
+}
+
+.jp-GitHubBrowser .jp-GitHubEditableName-input {
   background-color: var(--jp-layout-color2);
   color: var(--jp-ui-font-color1);
   font-size: large;

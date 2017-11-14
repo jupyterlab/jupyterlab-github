@@ -225,8 +225,9 @@ class GitHubEditableName extends Widget {
     super();
     this.addClass('jp-GitHubEditableName');
     this._nameNode = document.createElement('div');
+    this._nameNode.className = 'jp-GitHubEditableName-display';
     this._editNode = document.createElement('input');
-    this._editNode.className = 'jp-GitHubEditableNameInput';
+    this._editNode.className = 'jp-GitHubEditableName-input';
 
     this._placeholder = placeholder || '<Edit Name>'
 
@@ -241,7 +242,9 @@ class GitHubEditableName extends Widget {
       this._pending = true;
       Private.changeField(this._nameNode, this._editNode).then(value => {
         this._pending = false;
-        this.name.set(value);
+        if (this.name.get() !== value) {
+          this.name.set(value);
+        }
       });
     };
 
