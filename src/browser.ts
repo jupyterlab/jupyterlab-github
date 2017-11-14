@@ -48,9 +48,11 @@ class GitHubFileBrowser extends Widget {
         const user = this._drive.user;
         const path = this._browser.model.path;
         const repo = path.split('/')[0].split(':')[1];
-        const repoPath = URLExt.join(...path.split('/').slice(1));
-        const url = URLExt.join(GITHUB_BASE_URL, user, repo,
-                                'tree', 'master', repoPath);
+        let url = URLExt.join(GITHUB_BASE_URL, user);
+        if (repo) {
+          const dirPath = URLExt.join(repo, ...path.split('/').slice(1));
+          url = URLExt.join(url, repo, 'tree', 'master', dirPath);
+        }
         window.open(url);
       },
       className: 'jp-GitHubIcon',
