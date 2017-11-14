@@ -39,7 +39,7 @@ class GitHubFileBrowser extends Widget {
 
     this.userName = new GitHubEditableName(drive.user, '<Edit User>');
     this.userName.addClass('jp-GitHubEditableUserName');
-    this.userName.node.title = 'User';
+    this.userName.node.title = 'Click to edit user/organization';
     this._browser.toolbar.addItem('user', this.userName);
     this.userName.name.changed.connect(this._onUserChanged, this);
 
