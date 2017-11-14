@@ -88,12 +88,12 @@
   padding: 12px;
 }
 
-.jp-MyBinderButton {
+.jp-GitHubBrowser .jp-MyBinderButton {
   flex: 1 1;
   background-image: url(binder.svg);
 }
 
-.jp-MyBinderButton-disabled {
+.jp-GitHubBrowser .jp-MyBinderButton-disabled {
   opacity: 0.3;
 }
 
