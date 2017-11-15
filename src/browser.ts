@@ -2,11 +2,19 @@
 // Distributed under the terms of the Modified BSD License.
 
 import {
+  find
+} from '@phosphor/algorithm';
+
+import {
   PanelLayout, Widget
 } from '@phosphor/widgets';
 
 import {
-  ObservableValue
+  ToolbarButton
+} from '@jupyterlab/apputils';
+
+import {
+  ObservableValue, URLExt
 } from '@jupyterlab/coreutils';
 
 import {
@@ -16,6 +24,22 @@ import {
 import {
   GitHubDrive
 } from './contents';
+
+
+/**
+ * The base url for a mybinder deployment.
+ */
+const MY_BINDER_BASE_URL = 'https://mybinder.org/v2/gh';
+
+/**
+ * The GitHub base url.
+ */
+const GITHUB_BASE_URL = 'https://github.com';
+
+/**
+ * The className for disabling the mybinder button.
+ */
+const MY_BINDER_DISABLED = 'jp-MyBinderButton-disabled';
 
 /**
  * Widget for hosting the GitHub filebrowser.
@@ -30,16 +54,59 @@ class GitHubFileBrowser extends Widget {
     this._browser = browser;
     this._drive = drive;
 
-    const userLabel = new Widget();
-    userLabel.addClass('jp-GitHubUserLabel');
-    userLabel.node.textContent = 'User:';
-    this._browser.toolbar.addItem('label', userLabel);
-
+    // Create an editable name for the user/org name.
     this.userName = new GitHubEditableName(drive.user, '<Edit User>');
     this.userName.addClass('jp-GitHubEditableUserName');
-    this.userName.node.title = 'User';
+    this.userName.node.title = 'Click to edit user/organization';
     this._browser.toolbar.addItem('user', this.userName);
     this.userName.name.changed.connect(this._onUserChanged, this);
+
+    // Create a button that opens GitHub at the appropriate
+    // repo+directory.
+    this._openGitHubButton = new ToolbarButton({
+      onClick: () => {
+        let url = GITHUB_BASE_URL;
+        // If there is no valid user, do nothing.
+        if (!this._drive.validUserState.get()) {
+          window.open(url);
+          return;
+        }
+        const user = this._drive.user;
+        const path = this._browser.model.path;
+        const repo = path.split('/')[0].split(':')[1];
+        url = URLExt.join(url, user);
+        if (repo) {
+          const dirPath = URLExt.join(repo, ...path.split('/').slice(1));
+          url = URLExt.join(url, repo, 'tree', 'master', dirPath);
+        }
+        window.open(url);
+      },
+      className: 'jp-GitHubIcon',
+      tooltip: 'Open this repository on GitHub'
+    });
+    this._browser.toolbar.addItem('GitHub', this._openGitHubButton);
+
+    // Create a button the opens MyBinder to the appropriate repo.
+    this._launchBinderButton = new ToolbarButton({
+      onClick: () => {
+        // If binder is not active for this directory, do nothing.
+        if (!this._binderActive) {
+          return;
+        }
+        const user = this._drive.user;
+        const repo = this._browser.model.path.split('/')[0].split(':')[1];
+        const url = URLExt.join(MY_BINDER_BASE_URL, user, repo, 'master'); 
+        window.open(url+'?urlpath=lab');
+      },
+      tooltip: 'Launch this repository on mybinder.org',
+      className: 'jp-MyBinderButton'
+    });
+    this._browser.toolbar.addItem('binder', this._launchBinderButton);
+
+    // Set up a listener to check if we can launch mybinder.
+    this._browser.model.pathChanged.connect(this._onPathChanged, this);
+    // Trigger an initial pathChanged to check for binder state.
+    this._onPathChanged();
 
     this._drive.rateLimitedState.changed.connect(this._updateErrorPanel, this);
     this._drive.validUserState.changed.connect(this._updateErrorPanel, this);
@@ -68,6 +135,40 @@ class GitHubFileBrowser extends Widget {
         listing.node.focus();
       }
     });
+  }
+
+  /**
+   * React to the path changing for the browser.
+   */
+  private _onPathChanged(): void {
+    const path = this._browser.model.path;
+    // Check for a valid user.
+    if(!this._drive.validUserState.get()) {
+      this._launchBinderButton.addClass(MY_BINDER_DISABLED);
+      this._binderActive = false;
+      return;
+    }
+    // Check for a valid repo.
+    const repo = path.split('/')[0].split(':')[1];
+    if (!repo) {
+      this._launchBinderButton.addClass(MY_BINDER_DISABLED);
+      this._binderActive = false;
+      return;
+    }
+    // Check for one of the special values indicating we can
+    // launch the repository.
+    const item = find(this._browser.model.items(), i => {
+      return i.name === 'requirements.txt' || i.name === 'environment.yml' ||
+             i.name === 'apt.txt' || i.name === 'REQUIRE' ||
+             i.name === 'Dockerfile';
+    });
+    if (item) {
+      this._launchBinderButton.removeClass(MY_BINDER_DISABLED);
+      this._binderActive = true;
+      return;
+    }
+    this._launchBinderButton.addClass(MY_BINDER_DISABLED);
+    this._binderActive = false;
   }
 
   /**
@@ -108,6 +209,9 @@ class GitHubFileBrowser extends Widget {
   private _browser: FileBrowser;
   private _drive: GitHubDrive;
   private _errorPanel: GitHubErrorPanel | null;
+  private _openGitHubButton: ToolbarButton;
+  private _launchBinderButton: ToolbarButton;
+  private _binderActive = false;
 }
 
 /**
@@ -121,8 +225,9 @@ class GitHubEditableName extends Widget {
     super();
     this.addClass('jp-GitHubEditableName');
     this._nameNode = document.createElement('div');
+    this._nameNode.className = 'jp-GitHubEditableName-display';
     this._editNode = document.createElement('input');
-    this._editNode.className = 'jp-GitHubEditableNameInput';
+    this._editNode.className = 'jp-GitHubEditableName-input';
 
     this._placeholder = placeholder || '<Edit Name>'
 
@@ -137,7 +242,9 @@ class GitHubEditableName extends Widget {
       this._pending = true;
       Private.changeField(this._nameNode, this._editNode).then(value => {
         this._pending = false;
-        this.name.set(value);
+        if (this.name.get() !== value) {
+          this.name.set(value);
+        }
       });
     };
 
@@ -182,8 +289,6 @@ class GitHubErrorPanel extends Widget {
 }
 
 
-
-
 /**
  * A module-Private namespace.
  */
@@ -202,13 +307,10 @@ namespace Private {
    *   or has been canceled.
    */
   function changeField(text: HTMLElement, edit: HTMLInputElement): Promise<string> {
-    // Replace the text node with an the input element,
-    // setting the value and width of the input element to
-    // the same as the text node.
+    // Replace the text node with an the input element.
     let parent = text.parentElement as HTMLElement;
     let initialValue = text.textContent;
     edit.value = initialValue;
-    parent.style.width = String(parent.offsetWidth+3)+'px';
     parent.replaceChild(edit, text);
     edit.focus();
 
@@ -222,10 +324,8 @@ namespace Private {
 
     return new Promise<string>((resolve, reject) => {
       edit.onblur = () => {
-        // Restore the correct width and set the
-        // text content of the original node, then
+        // Set the text content of the original node, then
         // replace the node.
-        parent.style.width = '';
         parent.replaceChild(text, edit);
         text.textContent = edit.value || initialValue;
         resolve(edit.value);

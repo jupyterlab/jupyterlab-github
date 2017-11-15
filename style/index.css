@@ -20,21 +20,25 @@
   height: 100%;
 }
 
-.jp-GitHubBrowser .jp-GitHubUserLabel {
-  width: auto;
-  text-align: left;
-  font-size: large;
-}
-
 .jp-GitHubBrowser .jp-GitHubEditableName {
-  width: auto;
   overflow: hidden;
   white-space: nowrap;
   text-align: center;
   font-size: large;
+  padding: 0px;
+  flex: 8 8;
 }
 
-.jp-GitHubBrowser .jp-GitHubEditableNameInput {
+.jp-GitHubBrowser .jp-GitHubEditableName-display {
+  border: 1px solid transparent;
+}
+
+.jp-GitHubBrowser .jp-GitHubEditableName-display:hover {
+  border: 1px solid var(--jp-border-color1);
+  box-shadow: 0px 0px 2px 0px rgba(0,0,0,0.24);
+}
+
+.jp-GitHubBrowser .jp-GitHubEditableName-input {
   background-color: var(--jp-layout-color2);
   color: var(--jp-ui-font-color1);
   font-size: large;
@@ -92,4 +96,19 @@
   color: var(--jp-ui-font-color1);
   text-align: center;
   padding: 12px;
+}
+
+.jp-GitHubBrowser .jp-MyBinderButton {
+  flex: 1 1;
+  background-image: url(binder.svg);
+}
+
+.jp-GitHubBrowser .jp-MyBinderButton-disabled {
+  opacity: 0.3;
+}
+
+
+.jp-GitHubBrowser .jp-GitHubIcon {
+  flex: 1 1;
+  background-image: url(octocat.png);
 }
