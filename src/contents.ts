@@ -59,8 +59,7 @@ class GitHubDrive implements Contents.IDrive {
       });
     });
 
-    // Initialize the two valid-drive observables.
-    this.validUserState = new ObservableValue(true);
+    // Initialize the rate-limited observable.
     this.rateLimitedState = new ObservableValue(false);
   }
 
@@ -72,14 +71,16 @@ class GitHubDrive implements Contents.IDrive {
   }
 
   /**
+   * State for whether the user is valid.
+   */
+  get validUser(): boolean {
+    return this._validUser;
+  }
+
+  /**
    * Settings for the notebook server.
    */
   readonly serverSettings: ServerConnection.ISettings;
-
-  /**
-   * State for whether the user is valid.
-   */
-  readonly validUserState: ObservableValue;
 
   /**
    * State for whether the drive is being rate limited by GitHub.
@@ -132,7 +133,7 @@ class GitHubDrive implements Contents.IDrive {
     // If the org has not been set, return an empty directory
     // placeholder.
     if (resource.user === '') {
-      this._maybeUpdateState(false, null);
+      this._validUser = false;
       return Promise.resolve(Private.DummyDirectory);
     }
 
@@ -149,7 +150,10 @@ class GitHubDrive implements Contents.IDrive {
                   'contents', resource.path));
     return this._apiRequest<GitHubContents>(apiPath).then(contents => {
       // Set the states
-      this._maybeUpdateState(true, false);
+      this._validUser = true;
+      if (this.rateLimitedState.get() !== false) {
+        this.rateLimitedState.set(false);
+      }
 
       return Private.gitHubContentsToJupyterContents(
         path, contents, this._fileTypeForPath);
@@ -157,17 +161,22 @@ class GitHubDrive implements Contents.IDrive {
       if(response.xhr.status === 404) {
         console.warn('GitHub: cannot find org/repo. '+
                      'Perhaps you misspelled something?');
-        this._maybeUpdateState(false, true);
+        this._validUser = false;
         return Private.DummyDirectory;
       } else if (response.xhr.status === 403 &&
                  response.xhr.responseText.indexOf('rate limit') !== -1) {
-        this._maybeUpdateState(null, true);
+        if (this.rateLimitedState.get() !== true) {
+          this.rateLimitedState.set(true);
+        }
         console.error(response.message);
         return Promise.reject(response);
       } else if (response.xhr.status === 403 &&
                  response.xhr.responseText.indexOf('blob') !== -1) {
         // Set the states
-        this._maybeUpdateState(true, false);
+        this._validUser = true;
+        if (this.rateLimitedState.get() !== false) {
+          this.rateLimitedState.set(false);
+        }
         return this._getBlob(path);
       } else {
         console.error(response.message);
@@ -370,16 +379,22 @@ class GitHubDrive implements Contents.IDrive {
       const apiPath = URLExt.encodeParts(
         URLExt.join('users', user, 'repos'));
       this._apiRequest<GitHubRepo[]>(apiPath).then(repos => {
-        this._maybeUpdateState(true, false);
+        // Set the states
+        this._validUser = true;
+        if (this.rateLimitedState.get() !== false) {
+          this.rateLimitedState.set(false);
+        }
         resolve(Private.reposToDirectory(repos));
       }).catch((response) => {
         if (response.xhr.status === 403 &&
             response.xhr.responseText.indexOf('rate limit') !== -1) {
-          this._maybeUpdateState(null, true);
+          if (this.rateLimitedState.get() !== true) {
+            this.rateLimitedState.set(true);
+          }
         } else {
           console.warn('GitHub: cannot find user. '+
                        'Perhaps you misspelled something?');
-          this._maybeUpdateState(false, null);
+          this._validUser = false;
         }
         resolve(Private.DummyDirectory);
       });
@@ -400,21 +415,7 @@ class GitHubDrive implements Contents.IDrive {
     });
   }
 
-  /**
-   * Workaround for an error in the implementation of ObservableValue,
-   * which does not check if the value has actually changed before emitting
-   * a signal.
-   */
-  private _maybeUpdateState(validUser: boolean | null, rateLimited: boolean | null): void {
-    if (validUser !== null && validUser !== this.validUserState.get()) {
-      this.validUserState.set(validUser);
-    }
-    if (rateLimited !== null && rateLimited !== this.rateLimitedState.get()) {
-      this.rateLimitedState.set(rateLimited);
-    }
-  }
-
-
+  private _validUser = false;
   private _serverSettings: ServerConnection.ISettings;
   private _useProxy: Promise<boolean>;
   private _fileTypeForPath: (path: string) => DocumentRegistry.IFileType;

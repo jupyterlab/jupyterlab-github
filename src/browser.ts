@@ -67,7 +67,7 @@ class GitHubFileBrowser extends Widget {
       onClick: () => {
         let url = GITHUB_BASE_URL;
         // If there is no valid user, open the GitHub homepage.
-        if (!this._drive.validUserState.get()) {
+        if (!this._drive.validUser) {
           window.open(url);
           return;
         }
@@ -107,7 +107,6 @@ class GitHubFileBrowser extends Widget {
     this._onPathChanged();
 
     this._drive.rateLimitedState.changed.connect(this._updateErrorPanel, this);
-    this._drive.validUserState.changed.connect(this._updateErrorPanel, this);
   }
 
   /**
@@ -125,6 +124,7 @@ class GitHubFileBrowser extends Widget {
     this._changeGuard = true;
     this._browser.model.cd(`/${args.newValue as string}`).then(() => {
       this._changeGuard = false;
+      this._updateErrorPanel();
       // Once we have the new listing, maybe give the file listing
       // focus. Once the input element is removed, the active element
       // appears to revert to document.body. If the user has subsequently
@@ -140,18 +140,18 @@ class GitHubFileBrowser extends Widget {
    * React to the path changing for the browser.
    */
   private _onPathChanged(): void {
-    const path = this._browser.model.path;
+    const resource = parsePath(this._browser.model.path.split(':')[1]);
 
     // If we have navigated to the root, reset the user name.
-    if (!path && !this._changeGuard) {
+    if (!resource.user && !this._changeGuard) {
       this._changeGuard = true;
       this.userName.name.set('');
       this._changeGuard = false;
+      this._updateErrorPanel();
     }
 
-    const resource = parsePath(path);
     // Check for a valid user.
-    if(!this._drive.validUserState.get()) {
+    if(!this._drive.validUser) {
       this._launchBinderButton.addClass(MY_BINDER_DISABLED);
       this._binderActive = false;
       return;
@@ -182,18 +182,20 @@ class GitHubFileBrowser extends Widget {
    * React to a change in the validity of the drive.
    */
   private _updateErrorPanel(): void {
+    const resource = parsePath(this._browser.model.path.split(':')[1]);
     const rateLimited = this._drive.rateLimitedState.get();
-    const validUser = this._drive.validUserState.get();
-    // If everythings is valid, and an error panel is showing, remove it.
-    if (!rateLimited && validUser && this._errorPanel) {
+    const validUser = this._drive.validUser;
+
+    // If we currently have an error panel, remove it.
+    if (this._errorPanel) {
       const listing = (this._browser.layout as PanelLayout).widgets[2];
       listing.node.removeChild(this._errorPanel.node);
       this._errorPanel.dispose();
       this._errorPanel = null;
     }
 
-    // If we are being rate limited and there is not error panel, make one.
-    if (rateLimited && !this._errorPanel) {
+    // If we are being rate limited, make an error panel.
+    if (rateLimited) {
       this._errorPanel = new GitHubErrorPanel(
         'You have been rate limited by GitHub! '+
         'You will need to wait about an hour before '+
@@ -202,9 +204,8 @@ class GitHubFileBrowser extends Widget {
       listing.node.appendChild(this._errorPanel.node);
     }
 
-    // If we have an invalid user there is not error panel, make one.
-    if (!validUser && !this._errorPanel) {
-      const resource = parsePath(this._browser.model.path.split(':')[1]);
+    // If we have an invalid user, make an error panel.
+    if (!validUser) {
       const message = resource.user ?
         `"${resource.user}" appears to be an invalid user name!` :
         'Please enter a GitHub user name';
