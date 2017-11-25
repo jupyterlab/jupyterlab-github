@@ -74,8 +74,8 @@ class GitHubFileBrowser extends Widget {
         const resource = parsePath(this._browser.model.path.split(':')[1]);
         url = URLExt.join(url, resource.user);
         if (resource.repository) {
-          const dir = URLExt.join(resource.repository, resource.path);
-          url = URLExt.join(url, resource.repository, 'tree', 'master', dir);
+          url = URLExt.join(url, resource.repository,
+                            'tree', 'master', resource.path);
         }
         window.open(url);
       },
