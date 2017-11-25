@@ -22,7 +22,7 @@ import {
 } from '@jupyterlab/filebrowser';
 
 import {
-  GitHubDrive
+  GitHubDrive, parsePath
 } from './contents';
 
 
@@ -55,7 +55,7 @@ class GitHubFileBrowser extends Widget {
     this._drive = drive;
 
     // Create an editable name for the user/org name.
-    this.userName = new GitHubEditableName(drive.user, '<Edit User>');
+    this.userName = new GitHubEditableName('', '<Edit User>');
     this.userName.addClass('jp-GitHubEditableUserName');
     this.userName.node.title = 'Click to edit user/organization';
     this._browser.toolbar.addItem('user', this.userName);
@@ -66,18 +66,16 @@ class GitHubFileBrowser extends Widget {
     this._openGitHubButton = new ToolbarButton({
       onClick: () => {
         let url = GITHUB_BASE_URL;
-        // If there is no valid user, do nothing.
+        // If there is no valid user, open the GitHub homepage.
         if (!this._drive.validUserState.get()) {
           window.open(url);
           return;
         }
-        const user = this._drive.user;
-        const path = this._browser.model.path;
-        const repo = path.split('/')[0].split(':')[1];
-        url = URLExt.join(url, user);
-        if (repo) {
-          const dirPath = URLExt.join(repo, ...path.split('/').slice(1));
-          url = URLExt.join(url, repo, 'tree', 'master', dirPath);
+        const resource = parsePath(this._browser.model.path.split(':')[1]);
+        url = URLExt.join(url, resource.user);
+        if (resource.repository) {
+          const dir = URLExt.join(resource.repository, resource.path);
+          url = URLExt.join(url, resource.repository, 'tree', 'master', dir);
         }
         window.open(url);
       },
@@ -93,9 +91,9 @@ class GitHubFileBrowser extends Widget {
         if (!this._binderActive) {
           return;
         }
-        const user = this._drive.user;
-        const repo = this._browser.model.path.split('/')[0].split(':')[1];
-        const url = URLExt.join(MY_BINDER_BASE_URL, user, repo, 'master'); 
+        const resource = parsePath(this._browser.model.path.split(':')[1]);
+        const url = URLExt.join(MY_BINDER_BASE_URL, resource.user,
+                                resource.repository, 'master'); 
         window.open(url+'?urlpath=lab');
       },
       tooltip: 'Launch this repository on mybinder.org',
@@ -121,11 +119,12 @@ class GitHubFileBrowser extends Widget {
    * React to a change in user.
    */
   private _onUserChanged(sender: ObservableValue, args: ObservableValue.IChangedArgs) {
-    this._drive.user = args.newValue as string;
-    // After the user has been changed, cd to their GitHub
-    // root directory, since any previous directory is no
-    // longer valid.
-    this._browser.model.cd('/').then(() => {
+    if (this._changeGuard) {
+      return;
+    }
+    this._changeGuard = true;
+    this._browser.model.cd(`/${args.newValue as string}`).then(() => {
+      this._changeGuard = false;
       // Once we have the new listing, maybe give the file listing
       // focus. Once the input element is removed, the active element
       // appears to revert to document.body. If the user has subsequently
@@ -142,6 +141,15 @@ class GitHubFileBrowser extends Widget {
    */
   private _onPathChanged(): void {
     const path = this._browser.model.path;
+
+    // If we have navigated to the root, reset the user name.
+    if (!path && !this._changeGuard) {
+      this._changeGuard = true;
+      this.userName.name.set('');
+      this._changeGuard = false;
+    }
+
+    const resource = parsePath(path);
     // Check for a valid user.
     if(!this._drive.validUserState.get()) {
       this._launchBinderButton.addClass(MY_BINDER_DISABLED);
@@ -149,8 +157,7 @@ class GitHubFileBrowser extends Widget {
       return;
     }
     // Check for a valid repo.
-    const repo = path.split('/')[0].split(':')[1];
-    if (!repo) {
+    if (!resource.repository) {
       this._launchBinderButton.addClass(MY_BINDER_DISABLED);
       this._binderActive = false;
       return;
@@ -197,8 +204,9 @@ class GitHubFileBrowser extends Widget {
 
     // If we have an invalid user there is not error panel, make one.
     if (!validUser && !this._errorPanel) {
-      const message = this._drive.user ?
-        `"${this._drive.user}" appears to be an invalid user name!` :
+      const resource = parsePath(this._browser.model.path.split(':')[1]);
+      const message = resource.user ?
+        `"${resource.user}" appears to be an invalid user name!` :
         'Please enter a GitHub user name';
       this._errorPanel = new GitHubErrorPanel(message);
       const listing = (this._browser.layout as PanelLayout).widgets[2];
@@ -212,6 +220,7 @@ class GitHubFileBrowser extends Widget {
   private _openGitHubButton: ToolbarButton;
   private _launchBinderButton: ToolbarButton;
   private _binderActive = false;
+  private _changeGuard = false;
 }
 
 /**

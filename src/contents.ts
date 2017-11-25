@@ -71,20 +71,13 @@ class GitHubDrive implements Contents.IDrive {
     return 'GitHub';
   }
 
+  /**
+   * Settings for the notebook server.
+   */
   readonly serverSettings: ServerConnection.ISettings;
 
   /**
-   * The name of the current GitHub user for the drive.
-   */
-  get user(): string {
-    return this._user;
-  }
-  set user(user: string) {
-    this._user = user;
-  }
-
-  /**
-   * State for whether the user valid.
+   * State for whether the user is valid.
    */
   readonly validUserState: ObservableValue;
 
@@ -135,29 +128,28 @@ class GitHubDrive implements Contents.IDrive {
    * @returns A promise which resolves with the file content.
    */
   get(path: string, options?: Contents.IFetchOptions): Promise<Contents.IModel> {
+    const resource = parsePath(path);
     // If the org has not been set, return an empty directory
     // placeholder.
-    if (this._user === '') {
-      this.validUserState.set(false);
+    if (resource.user === '') {
+      this._maybeUpdateState(false, null);
       return Promise.resolve(Private.DummyDirectory);
     }
 
     // If the org has been set and the path is empty, list
     // the repositories for the org.
-    if (this._user !== '' && path === '') {
-      return this._listRepos();
+    if (resource.user && !resource.repository) {
+      return this._listRepos(resource.user);
     }
 
     // Otherwise identify the repository and get the contents of the
     // appropriate resource.
-    const repo = path.split('/')[0];
-    const repoPath = URLExt.join(...path.split('/').slice(1));
     const apiPath = URLExt.encodeParts(
-      URLExt.join('repos', this._user, repo, 'contents', repoPath));
+      URLExt.join('repos', resource.user, resource.repository,
+                  'contents', resource.path));
     return this._apiRequest<GitHubContents>(apiPath).then(contents => {
       // Set the states
-      this.validUserState.set(true);
-      this.rateLimitedState.set(false);
+      this._maybeUpdateState(true, false);
 
       return Private.gitHubContentsToJupyterContents(
         path, contents, this._fileTypeForPath);
@@ -165,18 +157,17 @@ class GitHubDrive implements Contents.IDrive {
       if(response.xhr.status === 404) {
         console.warn('GitHub: cannot find org/repo. '+
                      'Perhaps you misspelled something?');
-        this.validUserState.set(false);
+        this._maybeUpdateState(false, true);
         return Private.DummyDirectory;
       } else if (response.xhr.status === 403 &&
                  response.xhr.responseText.indexOf('rate limit') !== -1) {
-        this.rateLimitedState.set(true);
+        this._maybeUpdateState(null, true);
         console.error(response.message);
         return Promise.reject(response);
       } else if (response.xhr.status === 403 &&
                  response.xhr.responseText.indexOf('blob') !== -1) {
         // Set the states
-        this.validUserState.set(true);
-        this.rateLimitedState.set(false);
+        this._maybeUpdateState(true, false);
         return this._getBlob(path);
       } else {
         console.error(response.message);
@@ -196,26 +187,26 @@ class GitHubDrive implements Contents.IDrive {
    * path if necessary.
    */
   getDownloadUrl(path: string): Promise<string> {
-    // Error if the org has not been set
-    if (this._user === '') {
+    // Parse the path into user/repo/path
+    const resource = parsePath(path);
+    // Error if the user has not been set
+    if (!resource.user) {
       return Promise.reject('GitHub: no active organization');
     }
 
     // Error if there is no path.
-    if (path === '') {
+    if (!resource.path) {
       return Promise.reject('GitHub: No file selected');
     }
 
     // Otherwise identify the repository and get the url of the
     // appropriate resource.
-    const repo = path.split('/')[0];
-    const repoPath = URLExt.join(...path.split('/').slice(1));
-    const dirname = PathExt.dirname(repoPath);
-    const dirApiPath = URLExt.encodeParts(
-      URLExt.join('repos', this._user, repo, 'contents', dirname));
+    const dirname = PathExt.dirname(resource.path);
+    const dirApiPath = URLExt.encodeParts(URLExt.join('repos', resource.user,
+                       resource.repository, 'contents', dirname));
     return this._apiRequest<GitHubDirectoryListing>(dirApiPath).then(dirContents => {
       for (let item of dirContents) {
-        if (item.path === repoPath) {
+        if (item.path === resource.path) {
           return item.download_url;
         }
       }
@@ -345,14 +336,13 @@ class GitHubDrive implements Contents.IDrive {
     let blobData: GitHubFileContents;
     // Get the contents of the parent directory so that we can
     // get the sha of the blob.
-    const repo = path.split('/')[0];
-    const repoPath = URLExt.join(...path.split('/').slice(1));
-    const dirname = PathExt.dirname(repoPath);
-    const dirApiPath = URLExt.encodeParts(
-      URLExt.join('repos', this._user, repo, 'contents', dirname));
+    const resource = parsePath(path);
+    const dirname = PathExt.dirname(resource.path);
+    const dirApiPath = URLExt.encodeParts(URLExt.join('repos', resource.user,
+                       resource.repository, 'contents', dirname));
     return this._apiRequest<GitHubDirectoryListing>(dirApiPath).then(dirContents => {
       for (let item of dirContents) {
-        if (item.path === repoPath) {
+        if (item.path === resource.path) {
           blobData = item as GitHubFileContents;
           return item.sha;
         }
@@ -361,7 +351,7 @@ class GitHubDrive implements Contents.IDrive {
     }).then(sha => {
       //Once we have the sha, form the api url and make the request.
       const blobApiPath = URLExt.encodeParts(URLExt.join(
-        'repos', this._user, repo, 'git', 'blobs', sha));
+        'repos', resource.user, resource.repository, 'git', 'blobs', sha));
       return this._apiRequest<GitHubBlob>(blobApiPath);
     }).then(blob => {
       //Convert the data to a Contents.IModel.
@@ -374,23 +364,22 @@ class GitHubDrive implements Contents.IDrive {
   /**
    * List the repositories for the currently active user.
    */
-  private _listRepos(): Promise<Contents.IModel> {
+  private _listRepos(user: string): Promise<Contents.IModel> {
     return new Promise<Contents.IModel>((resolve, reject) => {
       // Try to find it under orgs.
       const apiPath = URLExt.encodeParts(
-        URLExt.join('users', this._user, 'repos'));
+        URLExt.join('users', user, 'repos'));
       this._apiRequest<GitHubRepo[]>(apiPath).then(repos => {
-        this.validUserState.set(true);
-        this.rateLimitedState.set(false);
+        this._maybeUpdateState(true, false);
         resolve(Private.reposToDirectory(repos));
       }).catch((response) => {
         if (response.xhr.status === 403 &&
             response.xhr.responseText.indexOf('rate limit') !== -1) {
-          this.rateLimitedState.set(true);
+          this._maybeUpdateState(null, true);
         } else {
           console.warn('GitHub: cannot find user. '+
                        'Perhaps you misspelled something?');
-          this.validUserState.set(false);
+          this._maybeUpdateState(false, null);
         }
         resolve(Private.DummyDirectory);
       });
@@ -411,18 +400,70 @@ class GitHubDrive implements Contents.IDrive {
     });
   }
 
+  /**
+   * Workaround for an error in the implementation of ObservableValue,
+   * which does not check if the value has actually changed before emitting
+   * a signal.
+   */
+  private _maybeUpdateState(validUser: boolean | null, rateLimited: boolean | null): void {
+    if (validUser !== null && validUser !== this.validUserState.get()) {
+      this.validUserState.set(validUser);
+    }
+    if (rateLimited !== null && rateLimited !== this.rateLimitedState.get()) {
+      this.rateLimitedState.set(rateLimited);
+    }
+  }
+
+
   private _serverSettings: ServerConnection.ISettings;
   private _useProxy: Promise<boolean>;
   private _fileTypeForPath: (path: string) => DocumentRegistry.IFileType;
   private _isDisposed = false;
   private _fileChanged = new Signal<this, Contents.IChangedArgs>(this);
-  private _user = '';
+}
+
+/**
+ * Specification for a file in a repository.
+ */
+export
+interface GitHubResource {
+  /**
+   * The user or organization for the resource.
+   */
+  readonly user: string;
+
+  /**
+   * The repository in the organization/user.
+   */
+  readonly repository: string;
+
+  /**
+   * The path in the repository to the resource.
+   */
+  readonly path: string;
+}
+
+
+/**
+ * Parse a path into a GitHubResource.
+ */
+export
+function parsePath(path: string): GitHubResource {
+  const parts = path.split('/');
+  const user = parts.length > 0 ? parts[0] : '';
+  const repository = parts.length > 1 ? parts[1] : '';
+  const repoPath = parts.length > 2 ? URLExt.join(...parts.slice(2)) : '';
+  return { user, repository, path: repoPath }
 }
 
 /**
  * Private namespace for utility functions.
  */
 namespace Private {
+  /**
+   * A dummy contents model indicating an invalid or
+   * nonexistent repository.
+   */
   export
   const DummyDirectory: Contents.IModel = {
     type: 'directory',
