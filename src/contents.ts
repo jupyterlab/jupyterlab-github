@@ -511,7 +511,7 @@ namespace Private {
             PathExt.join(path, c.name), c, fileTypeForPath);
         })
       } as Contents.IModel;
-    } else if (contents.type === 'file') {
+    } else if (contents.type === 'file' || contents.type === 'symlink') {
       // If it is a file or blob, convert to a file
       const fileType = fileTypeForPath(path);
       const fileContents = (contents as GitHubFileContents).content;
@@ -551,6 +551,16 @@ namespace Private {
         mimetype: null,
         content: null
       }
+    } else if (contents.type === 'submodule') {
+      // If it is a submodule, throw an error, since we cannot
+      // GET submodules at the moment. NOTE: due to a bug in the GithHub
+      // API, the `type` for submodules in a directory listing is incorrectly
+      // reported as `file`: https://github.com/github/developer.github.com/commit/1b329b04cece9f3087faa7b1e0382317a9b93490
+      // This means submodules will show up in the listing, but we still should not
+      // open them.
+      throw makeError(400, `Cannot open "${contents.name}" because it is a submodule`);
+    } else {
+      throw makeError(500, `"${contents.name}" has and unexpected type: ${contents.type}`);
     }
   }
 
@@ -591,5 +601,23 @@ namespace Private {
       mimetype: null,
       content
     };
+  }
+
+  /**
+   * Wrap an API error in a hacked-together error object
+   * masquerading as an `ServerConnection.IError`.
+   */
+  function makeError(code: number, message: string): ServerConnection.IError {
+    const xhr = {
+      status: code,
+      responseText: message
+    };
+    return {
+      event: undefined,
+      xhr: xhr as XMLHttpRequest,
+      ajaxSettings: null,
+      throwError: xhr.responseText,
+      message: xhr.responseText
+    } as any as ServerConnection.IError;
   }
 }
