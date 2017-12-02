@@ -6,12 +6,16 @@ import {
 } from '@phosphor/signaling';
 
 import {
-  ObservableValue, PathExt, URLExt
+  PathExt, URLExt
 } from '@jupyterlab/coreutils';
 
 import {
   DocumentRegistry
 } from '@jupyterlab/docregistry';
+
+import {
+  ObservableValue
+} from '@jupyterlab/observables';
 
 import {
   Contents, ServerConnection,

@@ -14,12 +14,16 @@ import {
 } from '@jupyterlab/apputils';
 
 import {
-  ObservableValue, URLExt
+  URLExt
 } from '@jupyterlab/coreutils';
 
 import {
   FileBrowser
 } from '@jupyterlab/filebrowser';
+
+import {
+  ObservableValue
+} from '@jupyterlab/observables';
 
 import {
   GitHubDrive, parsePath

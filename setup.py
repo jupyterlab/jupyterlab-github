@@ -6,7 +6,7 @@ import setuptools
 setuptools.setup(
     name='jupyterlab_github',
     description='A Jupyter Notebook server extension which acts as a proxy for GitHub API requests.',
-    version='0.2.0',
+    version='0.3.0',
     packages=setuptools.find_packages(),
     author          = 'Jupyter Development Team',
     author_email    = 'jupyter@googlegroups.com',
