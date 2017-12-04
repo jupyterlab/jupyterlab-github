@@ -18,6 +18,10 @@ import {
 } from '@jupyterlab/filebrowser';
 
 import {
+  ReadonlyJSONObject
+} from '@phosphor/coreutils';
+
+import {
   GitHubDrive
 } from './contents';
 
@@ -68,7 +72,7 @@ function activateFileBrowser(app: JupyterLab, manager: IDocumentManager, factory
   // overwrite that cwd. Otherwise we will not.
   const id = NAMESPACE;
   state.fetch(id).then(args => {
-    const user = (args && args['user'] as string) || '';
+    const user = (args && (args as ReadonlyJSONObject)['user'] as string) || '';
     gitHubBrowser.userName.name.set(user);
   });
   // Keep the IStateDB updated.
