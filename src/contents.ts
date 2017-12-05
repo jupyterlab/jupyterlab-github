@@ -223,6 +223,7 @@ class GitHubDrive implements Contents.IDrive {
           return item.download_url;
         }
       }
+      throw Private.makeError(404, `Cannot find file at ${resource.path}`);
     });
   }
 
@@ -479,7 +480,7 @@ namespace Private {
     created: '',
     writable: false,
     last_modified: '',
-    mimetype: null,
+    mimetype: '',
   };
 
   /**
@@ -509,7 +510,7 @@ namespace Private {
         writable: false,
         created: '',
         last_modified: '',
-        mimetype: null,
+        mimetype: '',
         content: contents.map( c => {
           return gitHubContentsToJupyterContents(
             PathExt.join(path, c.name), c, fileTypeForPath);
@@ -522,13 +523,13 @@ namespace Private {
       let content: any;
       switch (fileType.fileFormat) {
         case 'text':
-          content = fileContents ? atob(fileContents) : null;
+          content = fileContents !== undefined ? atob(fileContents) : null;
           break;
         case 'base64':
-          content = fileContents || null;
+          content = fileContents !== undefined ? fileContents : null;
           break;
         case 'json':
-          content = fileContents ? JSON.parse(atob(fileContents)) : null;
+          content = fileContents !== undefined ? JSON.parse(atob(fileContents)) : null;
           break;
       }
       return {
@@ -552,7 +553,7 @@ namespace Private {
         created: '',
         writable: false,
         last_modified: '',
-        mimetype: null,
+        mimetype: '',
         content: null
       }
     } else if (contents.type === 'submodule') {
@@ -589,7 +590,7 @@ namespace Private {
         created: '',
         writable: false,
         last_modified: '',
-        mimetype: null,
+        mimetype: '',
         content: null
       } as Contents.IModel;
     });
@@ -602,7 +603,7 @@ namespace Private {
       created: '',
       last_modified: '',
       writable: false,
-      mimetype: null,
+      mimetype: '',
       content
     };
   }
@@ -611,6 +612,7 @@ namespace Private {
    * Wrap an API error in a hacked-together error object
    * masquerading as an `ServerConnection.IError`.
    */
+  export
   function makeError(code: number, message: string): ServerConnection.IError {
     const xhr = {
       status: code,
