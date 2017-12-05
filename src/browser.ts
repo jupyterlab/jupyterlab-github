@@ -323,7 +323,7 @@ namespace Private {
   function changeField(text: HTMLElement, edit: HTMLInputElement): Promise<string> {
     // Replace the text node with an the input element.
     let parent = text.parentElement as HTMLElement;
-    let initialValue = text.textContent;
+    let initialValue = text.textContent || '';
     edit.value = initialValue;
     parent.replaceChild(edit, text);
     edit.focus();

@@ -77,7 +77,7 @@ function activateFileBrowser(app: JupyterLab, manager: IDocumentManager, factory
   });
   // Keep the IStateDB updated.
   gitHubBrowser.userName.name.changed.connect((sender, args) => {
-    state.save(id, { user: args.newValue });
+    state.save(id, { user: args.newValue as string });
   });
 
   // Add the file browser widget to the application restorer.

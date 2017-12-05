@@ -31,25 +31,25 @@ function browserApiRequest<T>(url: string): Promise<T> {
       if (xhr.status >= 200 && xhr.status < 300) {
         resolve(JSON.parse(xhr.response));
       } else {
-        const err: ServerConnection.IError = {
+        const err: any = {
           xhr,
           settings: undefined,
           request: undefined,
           event: undefined,
           message: xhr.responseText
         };
-        reject(err);
+        reject(err as ServerConnection.IError);
       }
     };
     xhr.onerror = () => {
-      const err: ServerConnection.IError = {
+      const err: any = {
         xhr,
         settings: undefined,
         request: undefined,
         event: undefined,
         message: xhr.responseText
       };
-      reject(err);
+      reject(err as ServerConnection.IError);
     };
     xhr.send();
   });
