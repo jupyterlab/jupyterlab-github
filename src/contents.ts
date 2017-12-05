@@ -522,13 +522,13 @@ namespace Private {
       let content: any;
       switch (fileType.fileFormat) {
         case 'text':
-          content = fileContents ? atob(fileContents) : null;
+          content = fileContents !== undefined ? atob(fileContents) : null;
           break;
         case 'base64':
-          content = fileContents || null;
+          content = fileContents !== undefined ? fileContents : null;
           break;
         case 'json':
-          content = fileContents ? JSON.parse(atob(fileContents)) : null;
+          content = fileContents !== undefined ? JSON.parse(atob(fileContents)) : null;
           break;
       }
       return {
