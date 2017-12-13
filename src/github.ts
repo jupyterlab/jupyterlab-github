@@ -118,16 +118,19 @@ class GitHubContents {
   /**
    * The URL for git access to the file.
    */
+  // tslint:disable-next-line
   git_url: string;
 
   /**
    * The URL for the file in the GitHub UI.
    */
+  // tslint:disable-next-line
   html_url: string;
 
   /**
    * The raw download URL for the file.
    */
+  // tslint:disable-next-line
   download_url: string;  
 
   /**
@@ -266,6 +269,7 @@ class GitHubRepo {
   /**
    * The full name of the repository, including the owner name.
    */
+  // tslint:disable-next-line
   full_name: string;
 
   /**
@@ -291,5 +295,6 @@ class GitHubRepo {
   /**
    * The URL for the repository in the GitHub UI.
    */
+  // tslint:disable-next-line
   html_url: string;
 }

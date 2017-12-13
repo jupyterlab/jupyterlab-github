@@ -97,8 +97,8 @@ class GitHubFileBrowser extends Widget {
         }
         const resource = parsePath(this._browser.model.path.split(':')[1]);
         const url = URLExt.join(MY_BINDER_BASE_URL, resource.user,
-                                resource.repository, 'master'); 
-        window.open(url+'?urlpath=lab');
+                                resource.repository, 'master');
+        window.open(url + '?urlpath=lab');
       },
       tooltip: 'Launch this repository on mybinder.org',
       className: 'jp-MyBinderButton'
@@ -155,7 +155,7 @@ class GitHubFileBrowser extends Widget {
     }
 
     // Check for a valid user.
-    if(!this._drive.validUser) {
+    if (!this._drive.validUser) {
       this._launchBinderButton.addClass(MY_BINDER_DISABLED);
       this._binderActive = false;
       return;
@@ -201,8 +201,8 @@ class GitHubFileBrowser extends Widget {
     // If we are being rate limited, make an error panel.
     if (rateLimited) {
       this._errorPanel = new GitHubErrorPanel(
-        'You have been rate limited by GitHub! '+
-        'You will need to wait about an hour before '+
+        'You have been rate limited by GitHub! ' +
+        'You will need to wait about an hour before ' +
         'continuing');
       const listing = (this._browser.layout as PanelLayout).widgets[2];
       listing.node.appendChild(this._errorPanel.node);
@@ -243,7 +243,7 @@ class GitHubEditableName extends Widget {
     this._editNode = document.createElement('input');
     this._editNode.className = 'jp-GitHubEditableName-input';
 
-    this._placeholder = placeholder || '<Edit Name>'
+    this._placeholder = placeholder || '<Edit Name>';
 
     this.node.appendChild(this._nameNode);
     this.name = new ObservableValue(initialName);
