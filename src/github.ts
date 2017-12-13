@@ -38,7 +38,7 @@ function browserApiRequest<T>(url: string): Promise<T> {
           event: undefined,
           message: xhr.responseText
         };
-        reject(err as ServerConnection.IError);
+        reject(err as ServerConnection.ResponseError);
       }
     };
     xhr.onerror = () => {
@@ -49,7 +49,7 @@ function browserApiRequest<T>(url: string): Promise<T> {
         event: undefined,
         message: xhr.responseText
       };
-      reject(err as ServerConnection.IError);
+      reject(err as ServerConnection.ResponseError);
     };
     xhr.send();
   });
@@ -68,19 +68,14 @@ function browserApiRequest<T>(url: string): Promise<T> {
  */
 export
 function proxiedApiRequest<T>(url: string, settings: ServerConnection.ISettings): Promise<T> {
-  let request = {
-    url: 'github/'+url,
-    method: 'GET',
-    cache: true
-  };
-
-  return ServerConnection.makeRequest(request, settings).then(response => {
-    if (response.xhr.status !== 200) {
-      throw ServerConnection.makeError(response);
+  const fullURL = URLExt.join(settings.baseUrl, 'github', url);
+  return ServerConnection.makeRequest(fullURL, {}, settings).then(response => {
+    if (response.status !== 200) {
+      throw new ServerConnection.ResponseError(response);
     }
-    return response.data;
+    return response.json();
   }).catch(response => {
-    throw ServerConnection.makeError(response);
+    throw new ServerConnection.ResponseError(response);
   });
 }
 

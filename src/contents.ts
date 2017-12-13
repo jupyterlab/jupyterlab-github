@@ -610,20 +610,11 @@ namespace Private {
 
   /**
    * Wrap an API error in a hacked-together error object
-   * masquerading as an `ServerConnection.IError`.
+   * masquerading as an `ServerConnection.ResponseError`.
    */
   export
-  function makeError(code: number, message: string): ServerConnection.IError {
-    const xhr = {
-      status: code,
-      responseText: message
-    };
-    return {
-      event: undefined,
-      xhr: xhr as XMLHttpRequest,
-      ajaxSettings: null,
-      throwError: xhr.responseText,
-      message: xhr.responseText
-    } as any as ServerConnection.IError;
+  function makeError(code: number, message: string): ServerConnection.ResponseError {
+    const response = new Response(message, { status: code, statusText: message });
+    return new ServerConnection.ResponseError(response, message);
   }
 }
