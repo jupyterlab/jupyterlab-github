@@ -22,36 +22,14 @@ const GITHUB_API = 'https://api.github.com';
  */
 export
 function browserApiRequest<T>(url: string): Promise<T> {
-  return new Promise((resolve, reject) => {
-    const method = 'GET';
-    const requestUrl = URLExt.join(GITHUB_API, url);
-    let xhr = new XMLHttpRequest();
-    xhr.open(method, requestUrl);
-    xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        resolve(JSON.parse(xhr.response));
-      } else {
-        const err: any = {
-          xhr,
-          settings: undefined,
-          request: undefined,
-          event: undefined,
-          message: xhr.responseText
-        };
-        reject(err as ServerConnection.ResponseError);
-      }
-    };
-    xhr.onerror = () => {
-      const err: any = {
-        xhr,
-        settings: undefined,
-        request: undefined,
-        event: undefined,
-        message: xhr.responseText
-      };
-      reject(err as ServerConnection.ResponseError);
-    };
-    xhr.send();
+  const requestUrl = URLExt.join(GITHUB_API, url);
+  return window.fetch(requestUrl).then(response => {
+    if (response.status !== 200) {
+      throw new ServerConnection.ResponseError(response);
+    }
+    return response.json();
+  }).catch((err: TypeError) => {
+    throw new ServerConnection.NetworkError(err);
   });
 }
 
