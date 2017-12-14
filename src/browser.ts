@@ -146,10 +146,10 @@ class GitHubFileBrowser extends Widget {
   private _onPathChanged(): void {
     const resource = parsePath(this._browser.model.path.split(':')[1]);
 
-    // If we have navigated to the root, reset the user name.
-    if (!resource.user && !this._changeGuard) {
+    // If we are not already changing the user name, set it.
+    if (!this._changeGuard) {
       this._changeGuard = true;
-      this.userName.name.set('');
+      this.userName.name.set(resource.user);
       this._changeGuard = false;
       this._updateErrorPanel();
     }

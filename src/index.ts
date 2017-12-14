@@ -6,20 +6,12 @@ import {
 } from '@jupyterlab/application';
 
 import {
-  IStateDB
-} from '@jupyterlab/coreutils';
-
-import {
   IDocumentManager
 } from '@jupyterlab/docmanager';
 
 import {
   IFileBrowserFactory
 } from '@jupyterlab/filebrowser';
-
-import {
-  ReadonlyJSONObject
-} from '@phosphor/coreutils';
 
 import {
   GitHubDrive
@@ -41,7 +33,7 @@ const NAMESPACE = 'github-filebrowser';
  */
 const fileBrowserPlugin: JupyterLabPlugin<void> = {
   id: 'jupyterlab-github:drive',
-  requires: [IDocumentManager, IFileBrowserFactory, ILayoutRestorer, IStateDB],
+  requires: [IDocumentManager, IFileBrowserFactory, ILayoutRestorer],
   activate: activateFileBrowser,
   autoStart: true
 };
@@ -49,7 +41,7 @@ const fileBrowserPlugin: JupyterLabPlugin<void> = {
 /**
  * Activate the file browser.
  */
-function activateFileBrowser(app: JupyterLab, manager: IDocumentManager, factory: IFileBrowserFactory, restorer: ILayoutRestorer, state: IStateDB): void {
+function activateFileBrowser(app: JupyterLab, manager: IDocumentManager, factory: IFileBrowserFactory, restorer: ILayoutRestorer): void {
   const { commands } = app;
 
   // Add the Google Drive backend to the contents manager.
@@ -65,20 +57,6 @@ function activateFileBrowser(app: JupyterLab, manager: IDocumentManager, factory
 
   gitHubBrowser.title.iconClass = 'jp-GitHub-tablogo';
   gitHubBrowser.id = 'github-file-browser';
-
-  // See if we have an user cached in the IStateDB.
-  // Warning: there is a potential race condition here: if the filebrowser
-  // tries to restore its directory before the user is reset, we will
-  // overwrite that cwd. Otherwise we will not.
-  const id = NAMESPACE;
-  state.fetch(id).then(args => {
-    const user = (args && (args as ReadonlyJSONObject)['user'] as string) || '';
-    gitHubBrowser.userName.name.set(user);
-  });
-  // Keep the IStateDB updated.
-  gitHubBrowser.userName.name.changed.connect((sender, args) => {
-    state.save(id, { user: args.newValue as string });
-  });
 
   // Add the file browser widget to the application restorer.
   restorer.add(gitHubBrowser, NAMESPACE);
