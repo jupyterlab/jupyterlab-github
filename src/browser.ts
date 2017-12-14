@@ -206,6 +206,7 @@ class GitHubFileBrowser extends Widget {
         'continuing');
       const listing = (this._browser.layout as PanelLayout).widgets[2];
       listing.node.appendChild(this._errorPanel.node);
+      return;
     }
 
     // If we have an invalid user, make an error panel.
@@ -216,6 +217,7 @@ class GitHubFileBrowser extends Widget {
       this._errorPanel = new GitHubErrorPanel(message);
       const listing = (this._browser.layout as PanelLayout).widgets[2];
       listing.node.appendChild(this._errorPanel.node);
+      return;
     }
   }
 

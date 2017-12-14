@@ -161,21 +161,21 @@ class GitHubDrive implements Contents.IDrive {
 
       return Private.gitHubContentsToJupyterContents(
         path, contents, this._fileTypeForPath);
-    }).catch(response => {
-      if (response.xhr.status === 404) {
+    }).catch((err: ServerConnection.ResponseError) => {
+      if (err.response.status === 404) {
         console.warn('GitHub: cannot find org/repo. ' +
                      'Perhaps you misspelled something?');
         this._validUser = false;
         return Private.dummyDirectory;
-      } else if (response.xhr.status === 403 &&
-                 response.xhr.responseText.indexOf('rate limit') !== -1) {
+      } else if (err.response.status === 403 &&
+                 err.message.indexOf('rate limit') !== -1) {
         if (this.rateLimitedState.get() !== true) {
           this.rateLimitedState.set(true);
         }
-        console.error(response.message);
-        return Promise.reject(response);
-      } else if (response.xhr.status === 403 &&
-                 response.xhr.responseText.indexOf('blob') !== -1) {
+        console.error(err.message);
+        return Promise.reject(err);
+      } else if (err.response.status === 403 &&
+                 err.message.indexOf('blob') !== -1) {
         // Set the states
         this._validUser = true;
         if (this.rateLimitedState.get() !== false) {
@@ -183,8 +183,8 @@ class GitHubDrive implements Contents.IDrive {
         }
         return this._getBlob(path);
       } else {
-        console.error(response.message);
-        return Promise.reject(response);
+        console.error(err.message);
+        return Promise.reject(err);
       }
     });
   }
@@ -390,9 +390,9 @@ class GitHubDrive implements Contents.IDrive {
           this.rateLimitedState.set(false);
         }
         resolve(Private.reposToDirectory(repos));
-      }).catch((response) => {
-        if (response.xhr.status === 403 &&
-            response.xhr.responseText.indexOf('rate limit') !== -1) {
+      }).catch((err: ServerConnection.ResponseError) => {
+        if (err.response.status === 403 &&
+            err.message.indexOf('rate limit') !== -1) {
           if (this.rateLimitedState.get() !== true) {
             this.rateLimitedState.set(true);
           }

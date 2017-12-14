@@ -25,11 +25,11 @@ function browserApiRequest<T>(url: string): Promise<T> {
   const requestUrl = URLExt.join(GITHUB_API, url);
   return window.fetch(requestUrl).then(response => {
     if (response.status !== 200) {
-      throw new ServerConnection.ResponseError(response);
+      return response.json().then(data => {
+        throw new ServerConnection.ResponseError(response, data.message);
+      });
     }
     return response.json();
-  }).catch((err: TypeError) => {
-    throw new ServerConnection.NetworkError(err);
   });
 }
 
@@ -49,11 +49,11 @@ function proxiedApiRequest<T>(url: string, settings: ServerConnection.ISettings)
   const fullURL = URLExt.join(settings.baseUrl, 'github', url);
   return ServerConnection.makeRequest(fullURL, {}, settings).then(response => {
     if (response.status !== 200) {
-      throw new ServerConnection.ResponseError(response);
+      return response.json().then(data => {
+        throw new ServerConnection.ResponseError(response, data.message);
+      });
     }
     return response.json();
-  }).catch(response => {
-    throw new ServerConnection.ResponseError(response);
   });
 }
 
