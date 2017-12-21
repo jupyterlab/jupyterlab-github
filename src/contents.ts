@@ -55,9 +55,9 @@ class GitHubDrive implements Contents.IDrive {
       proxiedApiRequest<any>('', this._serverSettings).then(() => {
         resolve(true);
       }).catch(() => {
-        console.warn('The JupyterLab GitHub server extension appears '+
-                     'to be missing. If you do not install it with application '+
-                     'credentials, you are likely to be rate limited by GitHub '+
+        console.warn('The JupyterLab GitHub server extension appears ' +
+                     'to be missing. If you do not install it with application ' +
+                     'credentials, you are likely to be rate limited by GitHub ' +
                      'very quickly');
         resolve(false);
       });
@@ -138,7 +138,7 @@ class GitHubDrive implements Contents.IDrive {
     // placeholder.
     if (resource.user === '') {
       this._validUser = false;
-      return Promise.resolve(Private.DummyDirectory);
+      return Promise.resolve(Private.dummyDirectory);
     }
 
     // If the org has been set and the path is empty, list
@@ -161,21 +161,21 @@ class GitHubDrive implements Contents.IDrive {
 
       return Private.gitHubContentsToJupyterContents(
         path, contents, this._fileTypeForPath);
-    }).catch(response => {
-      if(response.xhr.status === 404) {
-        console.warn('GitHub: cannot find org/repo. '+
+    }).catch((err: ServerConnection.ResponseError) => {
+      if (err.response.status === 404) {
+        console.warn('GitHub: cannot find org/repo. ' +
                      'Perhaps you misspelled something?');
         this._validUser = false;
-        return Private.DummyDirectory;
-      } else if (response.xhr.status === 403 &&
-                 response.xhr.responseText.indexOf('rate limit') !== -1) {
+        return Private.dummyDirectory;
+      } else if (err.response.status === 403 &&
+                 err.message.indexOf('rate limit') !== -1) {
         if (this.rateLimitedState.get() !== true) {
           this.rateLimitedState.set(true);
         }
-        console.error(response.message);
-        return Promise.reject(response);
-      } else if (response.xhr.status === 403 &&
-                 response.xhr.responseText.indexOf('blob') !== -1) {
+        console.error(err.message);
+        return Promise.reject(err);
+      } else if (err.response.status === 403 &&
+                 err.message.indexOf('blob') !== -1) {
         // Set the states
         this._validUser = true;
         if (this.rateLimitedState.get() !== false) {
@@ -183,8 +183,8 @@ class GitHubDrive implements Contents.IDrive {
         }
         return this._getBlob(path);
       } else {
-        console.error(response.message);
-        return Promise.reject(response);
+        console.error(err.message);
+        return Promise.reject(err);
       }
     });
   }
@@ -363,12 +363,12 @@ class GitHubDrive implements Contents.IDrive {
       }
       throw Error('Cannot find sha for blob');
     }).then(sha => {
-      //Once we have the sha, form the api url and make the request.
+      // Once we have the sha, form the api url and make the request.
       const blobApiPath = URLExt.encodeParts(URLExt.join(
         'repos', resource.user, resource.repository, 'git', 'blobs', sha));
       return this._apiRequest<GitHubBlob>(blobApiPath);
     }).then(blob => {
-      //Convert the data to a Contents.IModel.
+      // Convert the data to a Contents.IModel.
       blobData.content = blob.content;
       return Private.gitHubContentsToJupyterContents(
         path, blobData, this._fileTypeForPath);
@@ -390,18 +390,18 @@ class GitHubDrive implements Contents.IDrive {
           this.rateLimitedState.set(false);
         }
         resolve(Private.reposToDirectory(repos));
-      }).catch((response) => {
-        if (response.xhr.status === 403 &&
-            response.xhr.responseText.indexOf('rate limit') !== -1) {
+      }).catch((err: ServerConnection.ResponseError) => {
+        if (err.response.status === 403 &&
+            err.message.indexOf('rate limit') !== -1) {
           if (this.rateLimitedState.get() !== true) {
             this.rateLimitedState.set(true);
           }
         } else {
-          console.warn('GitHub: cannot find user. '+
+          console.warn('GitHub: cannot find user. ' +
                        'Perhaps you misspelled something?');
           this._validUser = false;
         }
-        resolve(Private.DummyDirectory);
+        resolve(Private.dummyDirectory);
       });
     });
   }
@@ -432,7 +432,7 @@ class GitHubDrive implements Contents.IDrive {
  * Specification for a file in a repository.
  */
 export
-interface GitHubResource {
+interface IGitHubResource {
   /**
    * The user or organization for the resource.
    */
@@ -451,15 +451,15 @@ interface GitHubResource {
 
 
 /**
- * Parse a path into a GitHubResource.
+ * Parse a path into a IGitHubResource.
  */
 export
-function parsePath(path: string): GitHubResource {
+function parsePath(path: string): IGitHubResource {
   const parts = path.split('/');
   const user = parts.length > 0 ? parts[0] : '';
   const repository = parts.length > 1 ? parts[1] : '';
   const repoPath = parts.length > 2 ? URLExt.join(...parts.slice(2)) : '';
-  return { user, repository, path: repoPath }
+  return { user, repository, path: repoPath };
 }
 
 /**
@@ -471,7 +471,7 @@ namespace Private {
    * nonexistent repository.
    */
   export
-  const DummyDirectory: Contents.IModel = {
+  const dummyDirectory: Contents.IModel = {
     type: 'directory',
     path: '',
     name: '',
@@ -531,6 +531,8 @@ namespace Private {
         case 'json':
           content = fileContents !== undefined ? JSON.parse(atob(fileContents)) : null;
           break;
+        default:
+          throw new Error(`Unexpected file format: ${fileType.fileFormat}`);
       }
       return {
         name: PathExt.basename(path),
@@ -542,7 +544,7 @@ namespace Private {
         last_modified: '',
         mimetype: fileType.mimeTypes[0],
         content
-      }
+      };
     } else if (contents.type === 'dir') {
       // If it is a directory, convert to that.
       return {
@@ -555,7 +557,7 @@ namespace Private {
         last_modified: '',
         mimetype: '',
         content: null
-      }
+      };
     } else if (contents.type === 'submodule') {
       // If it is a submodule, throw an error, since we cannot
       // GET submodules at the moment. NOTE: due to a bug in the GithHub
@@ -610,20 +612,11 @@ namespace Private {
 
   /**
    * Wrap an API error in a hacked-together error object
-   * masquerading as an `ServerConnection.IError`.
+   * masquerading as an `ServerConnection.ResponseError`.
    */
   export
-  function makeError(code: number, message: string): ServerConnection.IError {
-    const xhr = {
-      status: code,
-      responseText: message
-    };
-    return {
-      event: undefined,
-      xhr: xhr as XMLHttpRequest,
-      ajaxSettings: null,
-      throwError: xhr.responseText,
-      message: xhr.responseText
-    } as any as ServerConnection.IError;
+  function makeError(code: number, message: string): ServerConnection.ResponseError {
+    const response = new Response(message, { status: code, statusText: message });
+    return new ServerConnection.ResponseError(response, message);
   }
 }

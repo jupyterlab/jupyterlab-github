@@ -97,8 +97,8 @@ class GitHubFileBrowser extends Widget {
         }
         const resource = parsePath(this._browser.model.path.split(':')[1]);
         const url = URLExt.join(MY_BINDER_BASE_URL, resource.user,
-                                resource.repository, 'master'); 
-        window.open(url+'?urlpath=lab');
+                                resource.repository, 'master');
+        window.open(url + '?urlpath=lab');
       },
       tooltip: 'Launch this repository on mybinder.org',
       className: 'jp-MyBinderButton'
@@ -146,16 +146,16 @@ class GitHubFileBrowser extends Widget {
   private _onPathChanged(): void {
     const resource = parsePath(this._browser.model.path.split(':')[1]);
 
-    // If we have navigated to the root, reset the user name.
-    if (!resource.user && !this._changeGuard) {
+    // If we are not already changing the user name, set it.
+    if (!this._changeGuard) {
       this._changeGuard = true;
-      this.userName.name.set('');
+      this.userName.name.set(resource.user);
       this._changeGuard = false;
       this._updateErrorPanel();
     }
 
     // Check for a valid user.
-    if(!this._drive.validUser) {
+    if (!this._drive.validUser) {
       this._launchBinderButton.addClass(MY_BINDER_DISABLED);
       this._binderActive = false;
       return;
@@ -201,11 +201,12 @@ class GitHubFileBrowser extends Widget {
     // If we are being rate limited, make an error panel.
     if (rateLimited) {
       this._errorPanel = new GitHubErrorPanel(
-        'You have been rate limited by GitHub! '+
-        'You will need to wait about an hour before '+
+        'You have been rate limited by GitHub! ' +
+        'You will need to wait about an hour before ' +
         'continuing');
       const listing = (this._browser.layout as PanelLayout).widgets[2];
       listing.node.appendChild(this._errorPanel.node);
+      return;
     }
 
     // If we have an invalid user, make an error panel.
@@ -216,6 +217,7 @@ class GitHubFileBrowser extends Widget {
       this._errorPanel = new GitHubErrorPanel(message);
       const listing = (this._browser.layout as PanelLayout).widgets[2];
       listing.node.appendChild(this._errorPanel.node);
+      return;
     }
   }
 
@@ -243,7 +245,7 @@ class GitHubEditableName extends Widget {
     this._editNode = document.createElement('input');
     this._editNode.className = 'jp-GitHubEditableName-input';
 
-    this._placeholder = placeholder || '<Edit Name>'
+    this._placeholder = placeholder || '<Edit Name>';
 
     this.node.appendChild(this._nameNode);
     this.name = new ObservableValue(initialName);

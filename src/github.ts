@@ -22,36 +22,14 @@ const GITHUB_API = 'https://api.github.com';
  */
 export
 function browserApiRequest<T>(url: string): Promise<T> {
-  return new Promise((resolve, reject) => {
-    const method = 'GET';
-    const requestUrl = URLExt.join(GITHUB_API, url);
-    let xhr = new XMLHttpRequest();
-    xhr.open(method, requestUrl);
-    xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        resolve(JSON.parse(xhr.response));
-      } else {
-        const err: any = {
-          xhr,
-          settings: undefined,
-          request: undefined,
-          event: undefined,
-          message: xhr.responseText
-        };
-        reject(err as ServerConnection.IError);
-      }
-    };
-    xhr.onerror = () => {
-      const err: any = {
-        xhr,
-        settings: undefined,
-        request: undefined,
-        event: undefined,
-        message: xhr.responseText
-      };
-      reject(err as ServerConnection.IError);
-    };
-    xhr.send();
+  const requestUrl = URLExt.join(GITHUB_API, url);
+  return window.fetch(requestUrl).then(response => {
+    if (response.status !== 200) {
+      return response.json().then(data => {
+        throw new ServerConnection.ResponseError(response, data.message);
+      });
+    }
+    return response.json();
   });
 }
 
@@ -68,19 +46,14 @@ function browserApiRequest<T>(url: string): Promise<T> {
  */
 export
 function proxiedApiRequest<T>(url: string, settings: ServerConnection.ISettings): Promise<T> {
-  let request = {
-    url: 'github/'+url,
-    method: 'GET',
-    cache: true
-  };
-
-  return ServerConnection.makeRequest(request, settings).then(response => {
-    if (response.xhr.status !== 200) {
-      throw ServerConnection.makeError(response);
+  const fullURL = URLExt.join(settings.baseUrl, 'github', url);
+  return ServerConnection.makeRequest(fullURL, {}, settings).then(response => {
+    if (response.status !== 200) {
+      return response.json().then(data => {
+        throw new ServerConnection.ResponseError(response, data.message);
+      });
     }
-    return response.data;
-  }).catch(response => {
-    throw ServerConnection.makeError(response);
+    return response.json();
   });
 }
 
@@ -123,16 +96,19 @@ class GitHubContents {
   /**
    * The URL for git access to the file.
    */
+  // tslint:disable-next-line
   git_url: string;
 
   /**
    * The URL for the file in the GitHub UI.
    */
+  // tslint:disable-next-line
   html_url: string;
 
   /**
    * The raw download URL for the file.
    */
+  // tslint:disable-next-line
   download_url: string;  
 
   /**
@@ -271,6 +247,7 @@ class GitHubRepo {
   /**
    * The full name of the repository, including the owner name.
    */
+  // tslint:disable-next-line
   full_name: string;
 
   /**
@@ -296,5 +273,6 @@ class GitHubRepo {
   /**
    * The URL for the repository in the GitHub UI.
    */
+  // tslint:disable-next-line
   html_url: string;
 }
