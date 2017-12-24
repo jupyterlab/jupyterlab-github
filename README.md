@@ -1,4 +1,4 @@
-# Jupyterlab GitHub
+# JupyterLab GitHub
 
 A JupyterLab extension for accessing GitHub repositories.
 
