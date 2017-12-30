@@ -75,7 +75,9 @@ class GitHubFileBrowser extends Widget {
           window.open(url);
           return;
         }
-        const resource = parsePath(this._browser.model.path.split(':')[1]);
+        const localPath = this._browser.model.manager.services.contents
+          .localPath(this._browser.model.path);
+        const resource = parsePath(localPath);
         url = URLExt.join(url, resource.user);
         if (resource.repository) {
           url = URLExt.join(url, resource.repository,
@@ -95,7 +97,9 @@ class GitHubFileBrowser extends Widget {
         if (!this._binderActive) {
           return;
         }
-        const resource = parsePath(this._browser.model.path.split(':')[1]);
+        const localPath = this._browser.model.manager.services.contents
+          .localPath(this._browser.model.path);
+        const resource = parsePath(localPath);
         const url = URLExt.join(MY_BINDER_BASE_URL, resource.user,
                                 resource.repository, 'master');
         window.open(url + '?urlpath=lab');
@@ -144,7 +148,9 @@ class GitHubFileBrowser extends Widget {
    * React to the path changing for the browser.
    */
   private _onPathChanged(): void {
-    const resource = parsePath(this._browser.model.path.split(':')[1]);
+    const localPath = this._browser.model.manager.services.contents
+      .localPath(this._browser.model.path);
+    const resource = parsePath(localPath);
 
     // If we are not already changing the user name, set it.
     if (!this._changeGuard) {
@@ -186,7 +192,9 @@ class GitHubFileBrowser extends Widget {
    * React to a change in the validity of the drive.
    */
   private _updateErrorPanel(): void {
-    const resource = parsePath(this._browser.model.path.split(':')[1]);
+    const localPath = this._browser.model.manager.services.contents
+      .localPath(this._browser.model.path);
+    const resource = parsePath(localPath);
     const rateLimited = this._drive.rateLimitedState.get();
     const validUser = this._drive.validUser;
 
