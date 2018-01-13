@@ -102,7 +102,9 @@ class GitHubFileBrowser extends Widget {
         const resource = parsePath(localPath);
         const url = URLExt.join(MY_BINDER_BASE_URL, resource.user,
                                 resource.repository, 'master');
-        window.open(url + '?urlpath=lab');
+        // Attempt to open using the JupyterLab tree handler
+        const tree = URLExt.join('tree', resource.path);
+        window.open(url + `?urlpath=${tree}`);
       },
       tooltip: 'Launch this repository on mybinder.org',
       className: 'jp-MyBinderButton'
