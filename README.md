@@ -78,8 +78,13 @@ It is important to note that the "Client Secret" string is, as the name suggests
 Install the serverextension using pip, and then enable it:
 ```bash
 pip install jupyterlab_github
-jupyter serverextension enable --sys-prefix --py jupyterlab_github
 ```
+
+If you are running Notebook 5.2 or earlier, enable the server extension by running
+```bash
+jupyter serverextension enable --sys-prefix jupyterlab_latex
+```
+
 You then need to add our "Client ID" and "Client Secret" credentials from above
 to your notebook configuration file. Instructions for generating a configuration
 file can be found [here](http://jupyter-notebook.readthedocs.io/en/stable/config_overview.html#configure-nbserver)

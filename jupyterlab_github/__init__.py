@@ -10,6 +10,9 @@ from traitlets.config import Configurable
 from notebook.utils import url_path_join, url_escape
 from notebook.base.handlers import APIHandler
 
+__version__ = '0.5.1'
+
+
 link_regex = re.compile(r'<([^>]*)>;\s*rel="([\w]*)\"')
 GITHUB_API = 'https://api.github.com'
 
