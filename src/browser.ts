@@ -102,7 +102,9 @@ class GitHubFileBrowser extends Widget {
         const resource = parsePath(localPath);
         const url = URLExt.join(MY_BINDER_BASE_URL, resource.user,
                                 resource.repository, 'master');
-        window.open(url + '?urlpath=lab');
+        // Attempt to open using the JupyterLab tree handler
+        const tree = URLExt.join('lab', 'tree', resource.path);
+        window.open(url + `?urlpath=${tree}`);
       },
       tooltip: 'Launch this repository on mybinder.org',
       className: 'jp-MyBinderButton'
@@ -172,20 +174,31 @@ class GitHubFileBrowser extends Widget {
       this._binderActive = false;
       return;
     }
-    // Check for one of the special values indicating we can
-    // launch the repository.
-    const item = find(this._browser.model.items(), i => {
-      return i.name === 'requirements.txt' || i.name === 'environment.yml' ||
-             i.name === 'apt.txt' || i.name === 'REQUIRE' ||
-             i.name === 'Dockerfile';
-    });
-    if (item) {
-      this._launchBinderButton.removeClass(MY_BINDER_DISABLED);
-      this._binderActive = true;
-      return;
+    // If we are in the root of the repository, check for one of
+    // the special files indicating we can launch the repository on mybinder.
+    // TODO: If the user navigates to a subdirectory without hitting the root
+    // of the repository, we will not check for whether the repo is binder-able.
+    // Figure out some way around this.
+    if (resource.path === '') {
+      const item = find(this._browser.model.items(), i => {
+        return i.name === 'requirements.txt' || i.name === 'environment.yml' ||
+               i.name === 'apt.txt' || i.name === 'REQUIRE' ||
+               i.name === 'Dockerfile' ||
+               (i.name === 'binder' && i.type === 'directory');
+      });
+      if (item) {
+        this._launchBinderButton.removeClass(MY_BINDER_DISABLED);
+        this._binderActive = true;
+        return;
+      } else {
+        this._launchBinderButton.addClass(MY_BINDER_DISABLED);
+        this._binderActive = false;
+        return;
+      }
     }
-    this._launchBinderButton.addClass(MY_BINDER_DISABLED);
-    this._binderActive = false;
+    // If we got this far, we are in a subdirectory of a valid
+    // repository, and should not change the binderActive status.
+    return;
   }
 
   /**
