@@ -5,7 +5,8 @@
   "keywords": [
     "github",
     "jupyter",
-    "jupyterlab"
+    "jupyterlab",
+    "jupyterlab extension"
   ],
   "homepage": "https://github.com/jupyterlab/jupyterlab-github",
   "bugs": {
@@ -54,6 +55,14 @@
     "typescript": "~2.6.2"
   },
   "jupyterlab": {
-    "extension": true
+    "extension": true,
+    "discovery": {
+      "server": {
+        "managers": ["pip"],
+        "base": {
+          "name": "jupyterlab_github"
+        }
+      }
+    }
   }
 }
