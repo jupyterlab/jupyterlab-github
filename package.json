@@ -6,7 +6,7 @@
     "github",
     "jupyter",
     "jupyterlab",
-    "jupyterlab extension"
+    "jupyterlab-extension"
   ],
   "homepage": "https://github.com/jupyterlab/jupyterlab-github",
   "bugs": {
