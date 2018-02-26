@@ -82,7 +82,7 @@ pip install jupyterlab_github
 
 If you are running Notebook 5.2 or earlier, enable the server extension by running
 ```bash
-jupyter serverextension enable --sys-prefix jupyterlab_latex
+jupyter serverextension enable --sys-prefix jupyterlab_github
 ```
 
 You then need to add our "Client ID" and "Client Secret" credentials from above
