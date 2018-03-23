@@ -523,13 +523,17 @@ namespace Private {
       let content: any;
       switch (fileType.fileFormat) {
         case 'text':
-          content = fileContents !== undefined ? atob(fileContents) : null;
+          content = fileContents !== undefined ?
+            Private.b64DecodeUnicode(fileContents) :
+            null;
           break;
         case 'base64':
           content = fileContents !== undefined ? fileContents : null;
           break;
         case 'json':
-          content = fileContents !== undefined ? JSON.parse(atob(fileContents)) : null;
+          content = fileContents !== undefined ?
+            JSON.parse(Private.b64DecodeUnicode(fileContents)) :
+            null;
           break;
         default:
           throw new Error(`Unexpected file format: ${fileType.fileFormat}`);
@@ -618,5 +622,18 @@ namespace Private {
   function makeError(code: number, message: string): ServerConnection.ResponseError {
     const response = new Response(message, { status: code, statusText: message });
     return new ServerConnection.ResponseError(response, message);
+  }
+
+  /**
+   * Decode a base-64 encoded string into unicode.
+   *
+   * See https://developer.mozilla.org/en-US/docs/Web/API/WindowBase64/Base64_encoding_and_decoding#Solution_2_%E2%80%93_rewrite_the_DOMs_atob()_and_btoa()_using_JavaScript's_TypedArrays_and_UTF-8
+   */
+  export
+  function b64DecodeUnicode(str: string): string {
+    // From bytestream, to percent-encoding, to original string.
+    return decodeURIComponent(atob(str).split('').map(function(c) {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
   }
 }
