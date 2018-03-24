@@ -26,6 +26,8 @@ import {
   GitHubContents, GitHubBlob, GitHubFileContents, GitHubDirectoryListing
 } from './github';
 
+import * as base64js from 'base64-js';
+
 
 /**
  * A Contents.IDrive implementation that serves as a read-only
@@ -631,9 +633,7 @@ namespace Private {
    */
   export
   function b64DecodeUnicode(str: string): string {
-    // From bytestream, to percent-encoding, to original string.
-    return decodeURIComponent(atob(str).split('').map(function(c) {
-      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
+    const bytes = base64js.toByteArray(str.replace('\n', ''));
+    return new TextDecoder('utf8').decode(bytes);
   }
 }
