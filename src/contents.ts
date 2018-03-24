@@ -526,7 +526,7 @@ namespace Private {
       switch (fileType.fileFormat) {
         case 'text':
           content = fileContents !== undefined ?
-            Private.b64DecodeUnicode(fileContents) :
+            Private.b64DecodeUTF8(fileContents) :
             null;
           break;
         case 'base64':
@@ -534,7 +534,7 @@ namespace Private {
           break;
         case 'json':
           content = fileContents !== undefined ?
-            JSON.parse(Private.b64DecodeUnicode(fileContents)) :
+            JSON.parse(Private.b64DecodeUTF8(fileContents)) :
             null;
           break;
         default:
@@ -627,13 +627,18 @@ namespace Private {
   }
 
   /**
+   * Decoder from bytes to UTF-8.
+   */
+  const decoder = new TextDecoder('utf8');
+
+  /**
    * Decode a base-64 encoded string into unicode.
    *
    * See https://developer.mozilla.org/en-US/docs/Web/API/WindowBase64/Base64_encoding_and_decoding#Solution_2_%E2%80%93_rewrite_the_DOMs_atob()_and_btoa()_using_JavaScript's_TypedArrays_and_UTF-8
    */
   export
-  function b64DecodeUnicode(str: string): string {
+  function b64DecodeUTF8(str: string): string {
     const bytes = base64js.toByteArray(str.replace(/\n/g, ''));
-    return new TextDecoder('utf8').decode(bytes);
+    return decoder.decode(bytes);
   }
 }
