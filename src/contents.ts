@@ -633,7 +633,7 @@ namespace Private {
    */
   export
   function b64DecodeUnicode(str: string): string {
-    const bytes = base64js.toByteArray(str.replace('\n', ''));
+    const bytes = base64js.toByteArray(str.replace(/\n/g, ''));
     return new TextDecoder('utf8').decode(bytes);
   }
 }
