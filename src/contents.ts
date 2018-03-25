@@ -26,6 +26,8 @@ import {
   GitHubContents, GitHubBlob, GitHubFileContents, GitHubDirectoryListing
 } from './github';
 
+import * as base64js from 'base64-js';
+
 
 /**
  * A Contents.IDrive implementation that serves as a read-only
@@ -524,7 +526,7 @@ namespace Private {
       switch (fileType.fileFormat) {
         case 'text':
           content = fileContents !== undefined ?
-            Private.b64DecodeUnicode(fileContents) :
+            Private.b64DecodeUTF8(fileContents) :
             null;
           break;
         case 'base64':
@@ -532,7 +534,7 @@ namespace Private {
           break;
         case 'json':
           content = fileContents !== undefined ?
-            JSON.parse(Private.b64DecodeUnicode(fileContents)) :
+            JSON.parse(Private.b64DecodeUTF8(fileContents)) :
             null;
           break;
         default:
@@ -625,15 +627,18 @@ namespace Private {
   }
 
   /**
+   * Decoder from bytes to UTF-8.
+   */
+  const decoder = new TextDecoder('utf8');
+
+  /**
    * Decode a base-64 encoded string into unicode.
    *
    * See https://developer.mozilla.org/en-US/docs/Web/API/WindowBase64/Base64_encoding_and_decoding#Solution_2_%E2%80%93_rewrite_the_DOMs_atob()_and_btoa()_using_JavaScript's_TypedArrays_and_UTF-8
    */
   export
-  function b64DecodeUnicode(str: string): string {
-    // From bytestream, to percent-encoding, to original string.
-    return decodeURIComponent(atob(str).split('').map(function(c) {
-      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
+  function b64DecodeUTF8(str: string): string {
+    const bytes = base64js.toByteArray(str.replace(/\n/g, ''));
+    return decoder.decode(bytes);
   }
 }
