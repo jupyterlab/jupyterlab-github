@@ -18,19 +18,34 @@ link_regex = re.compile(r'<([^>]*)>;\s*rel="([\w]*)\"')
 
 class GitHubConfig(Configurable):
     """
-    A Configurable that declares the `access_token` parameter.
+    Allows configuration of access to the GitHub api
     """
     api_url = Unicode(
         'https://api.github.com', config=True,
-        help="The url for the GitHUb api"
+        help="The url for the GitHub api"
     )
     access_token = Unicode(
         '', config=True,
-        help="The GitHub access token"
+        help=(
+            "A personal access token for GitHub. If specified it takes "
+            "precedence over the `client_id` and `client_secret`"
+        )
+    )
+    client_id = Unicode(
+        '', config=True,
+        help="The Client ID for the GitHub OAuth app"
+    )
+    client_secret = Unicode(
+        '', config=True,
+        help="The Client secret for the GitHub OAuth app"
     )
     validate_cert = Bool(
         True, config=True,
-        help="Whether to validate the servers' SSL certificate"
+        help=(
+            "Whether to validate the servers' SSL certificate on requests "
+            "made to the GitHub api. In general this is a bad idea so only "
+            "disable SSL validation if you know what you are doing!"
+        )
     )
 
 
@@ -38,27 +53,33 @@ class GitHubHandler(APIHandler):
     """
     A proxy for the GitHub API v3.
 
-    The purpose of this proxy is to add the `access_token` parameter to the
-    API request, which allows for a higher rate limit. Without this, the rate
-    limit on unauthenticated calls is so limited as to be practically useless.
+    The purpose of this proxy is to provide authentication to the API requests
+    which allows for a higher rate limit. Without this, the rate limit on
+    unauthenticated calls is so limited as to be practically useless.
     """
     @gen.coroutine
-    def get(self, path = ''):
+    def get(self, path=''):
         """
-        Proxy API requests to GitHub, adding `access_token` parameter if it
-        has been set.
+        Proxy API requests to GitHub, adding authentication parameter(s) if
+        they have been set.
         """
 
         # Get access to the notebook config object
         c = GitHubConfig(config=self.config)
         try:
             api_path = url_path_join(c.api_url, url_escape(path))
-            # If the config has client_id and client_secret set,
-            # apply them to the request.
+            params = {}
             if c.access_token != '':
-                api_path = url_concat(
-                    api_path, dict(access_token=c.access_token, per_page=100)
-                )
+                # Preferentially use the access_token if set
+                params['access_token'] = c.access_token
+            elif c.client_id != '' and c.client_secret != '':
+                # Otherwise use client_id and client_secret if set
+                params['client_id'] = c.client_id
+                params['client_secret'] = c.client_secret
+            if params:
+                params['per_page'] = 100
+                api_path = url_concat(api_path, params)
+
             client = AsyncHTTPClient()
             request = HTTPRequest(
                 api_path, validate_cert=c.validate_cert,
