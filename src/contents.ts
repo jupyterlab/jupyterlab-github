@@ -381,30 +381,56 @@ class GitHubDrive implements Contents.IDrive {
    * List the repositories for the currently active user.
    */
   private _listRepos(user: string): Promise<Contents.IModel> {
-    return new Promise<Contents.IModel>((resolve, reject) => {
-      // Try to find it under orgs.
-      const apiPath = URLExt.encodeParts(
-        URLExt.join('users', user, 'repos'));
-      this._apiRequest<GitHubRepo[]>(apiPath).then(repos => {
-        // Set the states
-        this._validUser = true;
-        if (this.rateLimitedState.get() !== false) {
-          this.rateLimitedState.set(false);
-        }
-        resolve(Private.reposToDirectory(repos));
-      }).catch((err: ServerConnection.ResponseError) => {
-        if (err.response.status === 403 &&
-            err.message.indexOf('rate limit') !== -1) {
-          if (this.rateLimitedState.get() !== true) {
-            this.rateLimitedState.set(true);
+    // First, check if the `user` string is actually an org.
+    // If will return with an error if not, and we can try
+    // the user path.
+    const apiPath = URLExt.encodeParts(
+      URLExt.join('orgs', user, 'repos'));
+    return this._apiRequest<GitHubRepo[]>(apiPath).catch( err => {
+      // If we can't find the org, it may be a user.
+      if (err.response.status === 404) {
+        // Check if it is the authenticated user.
+        return this._apiRequest<any>('user').then(currentUser => {
+          let reposPath: string;
+          // If we are looking at the currently authenticated user,
+          // get all the repositories they own, which includes private ones.
+          if (currentUser.login === user) {
+            reposPath = URLExt.join('user', 'repos', '?type=owner');
+          } else {
+            reposPath = URLExt.encodeParts(URLExt.join('users', user, 'repos'));
           }
-        } else {
-          console.warn('GitHub: cannot find user. ' +
-                       'Perhaps you misspelled something?');
-          this._validUser = false;
+          return this._apiRequest<GitHubRepo[]>(reposPath);
+        }).catch(err => {
+          // If there is no authenticated user, return the public
+          // users api path.
+          if (err.response.status === 401) {
+            const reposPath =
+              URLExt.encodeParts(URLExt.join('users', user, 'repos'));
+            return this._apiRequest<GitHubRepo[]>(reposPath);
+          }
+          throw err;
+        });
+      }
+      throw err;
+    }).then(repos => {
+      // Set the states
+      this._validUser = true;
+      if (this.rateLimitedState.get() !== false) {
+        this.rateLimitedState.set(false);
+      }
+      return Private.reposToDirectory(repos);
+    }).catch(err => {
+      if (err.response.status === 403 &&
+          err.message.indexOf('rate limit') !== -1) {
+        if (this.rateLimitedState.get() !== true) {
+          this.rateLimitedState.set(true);
         }
-        resolve(Private.dummyDirectory);
-      });
+      } else {
+        console.warn('GitHub: cannot find user. ' +
+                     'Perhaps you misspelled something?');
+        this._validUser = false;
+      }
+      return Private.dummyDirectory;
     });
   }
 
