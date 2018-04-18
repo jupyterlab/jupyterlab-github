@@ -4,7 +4,7 @@ import tornado.gen as gen
 from tornado.httputil import url_concat
 from tornado.httpclient import AsyncHTTPClient, HTTPRequest, HTTPError
 
-from traitlets import Unicode
+from traitlets import Unicode, Bool
 from traitlets.config import Configurable
 
 from notebook.utils import url_path_join, url_escape
@@ -14,47 +14,75 @@ __version__ = '0.5.1'
 
 
 link_regex = re.compile(r'<([^>]*)>;\s*rel="([\w]*)\"')
-GITHUB_API = 'https://api.github.com'
+
 
 class GitHubConfig(Configurable):
     """
-    A Configurable that declares the 'client_id' and 'client_secret'
-    parameters.
+    Allows configuration of access to the GitHub api
     """
-    client_id = Unicode('', config=True,
-        help='The Client ID for the GitHub OAuth app')
-    client_secret = Unicode('', config=True,
-        help='The Client secret for the GitHub OAuth app')
+    api_url = Unicode(
+        'https://api.github.com', config=True,
+        help="The url for the GitHub api"
+    )
+    access_token = Unicode(
+        '', config=True,
+        help=(
+            "A personal access token for GitHub. If specified it takes "
+            "precedence over the `client_id` and `client_secret`"
+        )
+    )
+    client_id = Unicode(
+        '', config=True,
+        help="The Client ID for the GitHub OAuth app"
+    )
+    client_secret = Unicode(
+        '', config=True,
+        help="The Client secret for the GitHub OAuth app"
+    )
+    validate_cert = Bool(
+        True, config=True,
+        help=(
+            "Whether to validate the servers' SSL certificate on requests "
+            "made to the GitHub api. In general this is a bad idea so only "
+            "disable SSL validation if you know what you are doing!"
+        )
+    )
+
 
 class GitHubHandler(APIHandler):
     """
     A proxy for the GitHub API v3.
 
-    The purpose of this proxy is to add the 'client_id' and 'client_secret'
-    tokens to the API request, which allows for a higher rate limit.
-    Without this, the rate limit on unauthenticated calls is so limited as
-    to be practically useless.
+    The purpose of this proxy is to provide authentication to the API requests
+    which allows for a higher rate limit. Without this, the rate limit on
+    unauthenticated calls is so limited as to be practically useless.
     """
     @gen.coroutine
-    def get(self, path = ''):
+    def get(self, path=''):
         """
-        Proxy API requests to GitHub, adding 'client_id' and 'client_secret'
-        if they have been set.
+        Proxy API requests to GitHub, adding authentication parameter(s) if
+        they have been set.
         """
 
         # Get access to the notebook config object
         c = GitHubConfig(config=self.config)
         try:
-            api_path = url_path_join(GITHUB_API, url_escape(path))
-            # If the config has client_id and client_secret set,
-            # apply them to the request.
-            if c.client_id != '' and c.client_secret != '':
-                api_path = url_concat(api_path,
-                    {'client_id': c.client_id,\
-                     'client_secret': c.client_secret,\
-                     'per_page': 100})
+            api_path = url_path_join(c.api_url, url_escape(path))
+            params = {'per_page': 100}
+            if c.access_token != '':
+                # Preferentially use the access_token if set
+                params['access_token'] = c.access_token
+            elif c.client_id != '' and c.client_secret != '':
+                # Otherwise use client_id and client_secret if set
+                params['client_id'] = c.client_id
+                params['client_secret'] = c.client_secret
+
+            api_path = url_concat(api_path, params)
             client = AsyncHTTPClient()
-            request = HTTPRequest(api_path, user_agent='JupyterLab GitHub')
+            request = HTTPRequest(
+                api_path, validate_cert=c.validate_cert,
+                user_agent='JupyterLab GitHub'
+            )
             response = yield client.fetch(request)
             data = json.loads(response.body.decode('utf-8'))
 
@@ -73,7 +101,7 @@ class GitHubHandler(APIHandler):
 
         except HTTPError as err:
             self.set_status(err.code)
-            self.finish(err.response.body);
+            self.finish(err.response.body)
 
     def _maybe_get_next_page_path(self, response):
         # If there is a 'Link' header in the response, we
