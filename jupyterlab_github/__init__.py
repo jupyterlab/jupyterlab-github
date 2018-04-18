@@ -68,7 +68,7 @@ class GitHubHandler(APIHandler):
         c = GitHubConfig(config=self.config)
         try:
             api_path = url_path_join(c.api_url, url_escape(path))
-            params = {}
+            params = {'per_page': 100}
             if c.access_token != '':
                 # Preferentially use the access_token if set
                 params['access_token'] = c.access_token
@@ -76,10 +76,8 @@ class GitHubHandler(APIHandler):
                 # Otherwise use client_id and client_secret if set
                 params['client_id'] = c.client_id
                 params['client_secret'] = c.client_secret
-            if params:
-                params['per_page'] = 100
-                api_path = url_concat(api_path, params)
 
+            api_path = url_concat(api_path, params)
             client = AsyncHTTPClient()
             request = HTTPRequest(
                 api_path, validate_cert=c.validate_cert,
