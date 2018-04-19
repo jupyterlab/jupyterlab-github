@@ -58,13 +58,12 @@ being rate-limited first-hand!
 
 ### 2. Getting your credentials from GitHub
 
-There are two approaches to getting credentials from GitHub.
-First, you can get an access token. Second, you can register an OAuth app.
+There are two approaches to getting credentials from GitHub:
+(1) you can get an access token, (2) you can register an OAuth app.
 The second approach is not recommended, and will be removed in a future release.
 
-#### Getting an access token
+#### Getting an access token (**recommended**)
 
-This is the recommended way to authenticate yourself with GitHub.
 You can get an access token by following these steps:
 1. [Verify](https://help.github.com/articles/verifying-your-email-address) your email address with GitHub.
 1. Go to your account settings on GitHub and select "Developer Settings" from the left panel.
@@ -75,11 +74,13 @@ You can get an access token by following these steps:
 1. You should be given a string which will be your access token.
 
 Remember that this token is effectively a password for your GitHub account.
-Do not share it online, as people can use it to access all of your data on GitHub.
+*Do not* share it online or check the token into version control,
+as people can use it to access all of your data on GitHub.
 
-#### Setting up and OAuth application
+#### Setting up an OAuth application (**deprecated**)
 
-This approach to authenticating with GitHub is not recommended, and will be removed in a future release.
+This approach to authenticating with GitHub is deprecated, and will be removed in a future release.
+New users should use the access token approach.
 You can register an OAuth application with GitHub by following these steps:
 1. Log into your GitHub account.
 1. Go to https://github.com/settings/developers and select the "OAuth Apps" tab on the left.
