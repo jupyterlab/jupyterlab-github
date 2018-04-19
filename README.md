@@ -125,3 +125,16 @@ c.GitHubConfig.client_secret = '< YOUR_CLIENT_SECRET >'
 where "`< YOUR_CLIENT_ID >`" and "`< YOUR_CLIENT_SECRET >`" are the app values you obtained above.
 
 With this, you should be done! Launch JupyterLab and look for the GitHub tab on the left!
+
+## Customization
+
+You can set the plugin to start showing a particular repository at launch time.
+Open the "Advanced Settings" editor in the Settings menu,
+and under the GitHub settings add
+```json
+{
+  "defaultRepo": "owner/repository"
+}
+```
+where `owner` is the GitHub user/org,
+and `repository` is the name of the repository you want to open.

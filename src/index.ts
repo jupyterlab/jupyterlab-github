@@ -6,6 +6,10 @@ import {
 } from '@jupyterlab/application';
 
 import {
+  ISettingRegistry
+} from '@jupyterlab/coreutils';
+
+import {
   IDocumentManager
 } from '@jupyterlab/docmanager';
 
@@ -24,16 +28,21 @@ import {
 import '../style/index.css';
 
 /**
- * Google Drive filebrowser plugin state namespace.
+ * GitHub filebrowser plugin state namespace.
  */
 const NAMESPACE = 'github-filebrowser';
+
+/**
+ * The ID for the plugin.
+ */
+const PLUGIN_ID = '@jupyterlab/github:drive';
 
 /**
  * The JupyterLab plugin for the GitHub Filebrowser.
  */
 const fileBrowserPlugin: JupyterLabPlugin<void> = {
-  id: 'jupyterlab-github:drive',
-  requires: [IDocumentManager, IFileBrowserFactory, ILayoutRestorer],
+  id: PLUGIN_ID,
+  requires: [IDocumentManager, IFileBrowserFactory, ILayoutRestorer, ISettingRegistry],
   activate: activateFileBrowser,
   autoStart: true
 };
@@ -41,10 +50,10 @@ const fileBrowserPlugin: JupyterLabPlugin<void> = {
 /**
  * Activate the file browser.
  */
-function activateFileBrowser(app: JupyterLab, manager: IDocumentManager, factory: IFileBrowserFactory, restorer: ILayoutRestorer): void {
+function activateFileBrowser(app: JupyterLab, manager: IDocumentManager, factory: IFileBrowserFactory, restorer: ILayoutRestorer, settingRegistry: ISettingRegistry): void {
   const { commands } = app;
 
-  // Add the Google Drive backend to the contents manager.
+  // Add the GitHub backend to the contents manager.
   const drive = new GitHubDrive(app.docRegistry);
   manager.services.contents.addDrive(drive);
 
@@ -61,6 +70,19 @@ function activateFileBrowser(app: JupyterLab, manager: IDocumentManager, factory
   // Add the file browser widget to the application restorer.
   restorer.add(gitHubBrowser, NAMESPACE);
   app.shell.addToLeftArea(gitHubBrowser, { rank: 102 });
+
+  // Fetch the initial state of the settings.
+  Promise.all([settingRegistry.load(PLUGIN_ID), app.restored])
+  .then(([settings]) => {
+    const defaultRepo = settings.get('defaultRepo').composite as string | null;
+    if (defaultRepo) {
+      browser.model.restored.then( () => {
+        browser.model.cd(`/${defaultRepo}`);
+      });
+    }
+  }).catch((reason: Error) => {
+    console.error(reason.message);
+  });
 
   return;
 }

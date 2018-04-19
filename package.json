@@ -19,6 +19,7 @@
     "lib/*/*.js",
     "lib/*.d.ts",
     "lib/*.js",
+    "schema/*.json",
     "style/*.*"
   ],
   "main": "lib/index.js",
@@ -68,6 +69,7 @@
           "name": "jupyterlab_github"
         }
       }
-    }
+    },
+    "schemaDir": "schema"
   }
 }
