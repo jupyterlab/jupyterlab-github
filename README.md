@@ -58,7 +58,30 @@ being rate-limited first-hand!
 
 ### 2. Getting your credentials from GitHub
 
-You will need to register an OAuth application with GitHub by following these steps:
+There are two approaches to getting credentials from GitHub:
+(1) you can get an access token, (2) you can register an OAuth app.
+The second approach is not recommended, and will be removed in a future release.
+
+#### Getting an access token (**recommended**)
+
+You can get an access token by following these steps:
+1. [Verify](https://help.github.com/articles/verifying-your-email-address) your email address with GitHub.
+1. Go to your account settings on GitHub and select "Developer Settings" from the left panel.
+1. On the left, select "Personal access tokens"
+1. Click the "Generate new token" button, and enter your password.
+1. Give the token a description, and check the "**repo**" scope box.
+1. Click "Generate token"
+1. You should be given a string which will be your access token.
+
+Remember that this token is effectively a password for your GitHub account.
+*Do not* share it online or check the token into version control,
+as people can use it to access all of your data on GitHub.
+
+#### Setting up an OAuth application (**deprecated**)
+
+This approach to authenticating with GitHub is deprecated, and will be removed in a future release.
+New users should use the access token approach.
+You can register an OAuth application with GitHub by following these steps:
 1. Log into your GitHub account.
 1. Go to https://github.com/settings/developers and select the "OAuth Apps" tab on the left.
 1. Click the "New OAuth App" button.
@@ -85,14 +108,20 @@ If you are running Notebook 5.2 or earlier, enable the server extension by runni
 jupyter serverextension enable --sys-prefix jupyterlab_github
 ```
 
-You then need to add our "Client ID" and "Client Secret" credentials from above
+You now need to add the credentials you got from GitHub
 to your notebook configuration file. Instructions for generating a configuration
 file can be found [here](http://jupyter-notebook.readthedocs.io/en/stable/config_overview.html#configure-nbserver)
 Once you have identified this file, add the following lines to it:
+Once you have identified this file, add the following lines to it:
+```python
+c.GitHubConfig.access_token = '< YOUR_ACCESS_TOKEN >'
+```
+where "`< YOUR_ACCESS_TOKEN >`" is the string value you obtained above.
+If you generated an OAuth app, instead enter the following:
 ```python
 c.GitHubConfig.client_id = '< YOUR_CLIENT_ID >'
 c.GitHubConfig.client_secret = '< YOUR_CLIENT_SECRET >'
 ```
-where "`< YOUR_CLIENT_ID >`" and "`< YOUR_CLIENT_SECRET >`" are the string values you obtained above.
+where "`< YOUR_CLIENT_ID >`" and "`< YOUR_CLIENT_SECRET >`" are the app values you obtained above.
 
 With this, you should be done! Launch JupyterLab and look for the GitHub tab on the left!
