@@ -68,7 +68,9 @@ class GitHubHandler(APIHandler):
         c = GitHubConfig(config=self.config)
         try:
             api_path = url_path_join(c.api_url, url_escape(path))
-            params = {'per_page': 100}
+            query = self.request.query_arguments
+            params = { key: query[key][0].decode() for key in query }
+            params['per_page'] = 100
             if c.access_token != '':
                 # Preferentially use the access_token if set
                 params['access_token'] = c.access_token
