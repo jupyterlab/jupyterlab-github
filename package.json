@@ -1,6 +1,6 @@
 {
   "name": "@jupyterlab/github",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "JupyterLab viewer for GitHub repositories",
   "keywords": [
     "github",
