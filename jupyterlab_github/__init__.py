@@ -103,7 +103,8 @@ class GitHubHandler(APIHandler):
 
         except HTTPError as err:
             self.set_status(err.code)
-            self.finish(err.response.body)
+            message = err.response.body if err.response else str(err.code)
+            self.finish(message)
 
     def _maybe_get_next_page_path(self, response):
         # If there is a 'Link' header in the response, we
