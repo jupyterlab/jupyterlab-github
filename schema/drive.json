@@ -6,6 +6,9 @@
   "properties": {
     "defaultRepo": {
       "type": "string", "title": "Default Repository", "default": ""
+    },
+    "gitHubBaseUrl": {
+      "type": "string", "title": "The GitHub URL", "default": "https://github.com"
     }
   },
   "type": "object"

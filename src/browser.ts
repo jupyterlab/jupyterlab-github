@@ -36,11 +36,6 @@ import {
 const MY_BINDER_BASE_URL = 'https://mybinder.org/v2/gh';
 
 /**
- * The GitHub base url.
- */
-const GITHUB_BASE_URL = 'https://github.com';
-
-/**
  * The className for disabling the mybinder button.
  */
 const MY_BINDER_DISABLED = 'jp-MyBinderButton-disabled';
@@ -50,6 +45,7 @@ const MY_BINDER_DISABLED = 'jp-MyBinderButton-disabled';
  */
 export
 class GitHubFileBrowser extends Widget {
+  gitHubBaseUrl: string;
   constructor(browser: FileBrowser, drive: GitHubDrive) {
     super();
     this.addClass('jp-GitHubBrowser');
@@ -64,12 +60,12 @@ class GitHubFileBrowser extends Widget {
     this.userName.node.title = 'Click to edit user/organization';
     this._browser.toolbar.addItem('user', this.userName);
     this.userName.name.changed.connect(this._onUserChanged, this);
-
+    this.gitHubBaseUrl = "https://github.com"
     // Create a button that opens GitHub at the appropriate
     // repo+directory.
     this._openGitHubButton = new ToolbarButton({
       onClick: () => {
-        let url = GITHUB_BASE_URL;
+        let url = this.gitHubBaseUrl;
         // If there is no valid user, open the GitHub homepage.
         if (!this._drive.validUser) {
           window.open(url);

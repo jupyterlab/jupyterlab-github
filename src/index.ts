@@ -74,6 +74,8 @@ function activateFileBrowser(app: JupyterLab, manager: IDocumentManager, factory
   // Fetch the initial state of the settings.
   Promise.all([settingRegistry.load(PLUGIN_ID), app.restored])
   .then(([settings]) => {
+    const gitHubBaseUrl = settings.get('gitHubBaseUrl').composite as string;
+    gitHubBrowser.gitHubBaseUrl = gitHubBaseUrl;
     const defaultRepo = settings.get('defaultRepo').composite as string | null;
     if (defaultRepo) {
       browser.model.restored.then( () => {
