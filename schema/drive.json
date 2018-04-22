@@ -7,8 +7,8 @@
     "defaultRepo": {
       "type": "string", "title": "Default Repository", "default": ""
     },
-    "gitHubBaseUrl": {
-      "type": "string", "title": "The GitHub URL", "default": "https://github.com"
+    "baseUrl": {
+      "type": "string", "title": "The GitHub Base URL", "default": "https://github.com"
     }
   },
   "type": "object"

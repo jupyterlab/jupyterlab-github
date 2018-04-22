@@ -22,7 +22,7 @@ import {
 } from './contents';
 
 import {
-  GitHubFileBrowser
+  GitHubFileBrowser, DEFAULT_GITHUB_BASE_URL
 } from './browser';
 
 import '../style/index.css';
@@ -71,11 +71,16 @@ function activateFileBrowser(app: JupyterLab, manager: IDocumentManager, factory
   restorer.add(gitHubBrowser, NAMESPACE);
   app.shell.addToLeftArea(gitHubBrowser, { rank: 102 });
 
+  const onSettingsUpdated = (settings: ISettingRegistry.ISettings) => {
+    const baseUrl = settings.get('baseUrl').composite as string | null | undefined;
+    gitHubBrowser.baseUrl = baseUrl || DEFAULT_GITHUB_BASE_URL;
+  };
+
   // Fetch the initial state of the settings.
   Promise.all([settingRegistry.load(PLUGIN_ID), app.restored])
   .then(([settings]) => {
-    const gitHubBaseUrl = settings.get('gitHubBaseUrl').composite as string;
-    gitHubBrowser.gitHubBaseUrl = gitHubBaseUrl;
+    settings.changed.connect(onSettingsUpdated);
+    onSettingsUpdated(settings);
     const defaultRepo = settings.get('defaultRepo').composite as string | null;
     if (defaultRepo) {
       browser.model.restored.then( () => {
