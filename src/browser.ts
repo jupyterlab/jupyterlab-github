@@ -38,7 +38,7 @@ const MY_BINDER_BASE_URL = 'https://mybinder.org/v2/gh';
 /**
  * The GitHub base url.
  */
-const GITHUB_BASE_URL = 'https://github.com';
+export const DEFAULT_GITHUB_BASE_URL = 'https://github.com';
 
 /**
  * The className for disabling the mybinder button.
@@ -64,12 +64,12 @@ class GitHubFileBrowser extends Widget {
     this.userName.node.title = 'Click to edit user/organization';
     this._browser.toolbar.addItem('user', this.userName);
     this.userName.name.changed.connect(this._onUserChanged, this);
-
+    this.baseUrl = DEFAULT_GITHUB_BASE_URL;
     // Create a button that opens GitHub at the appropriate
     // repo+directory.
     this._openGitHubButton = new ToolbarButton({
       onClick: () => {
-        let url = GITHUB_BASE_URL;
+        let url = this.baseUrl;
         // If there is no valid user, open the GitHub homepage.
         if (!this._drive.validUser) {
           window.open(url);
@@ -117,12 +117,27 @@ class GitHubFileBrowser extends Widget {
     this._onPathChanged();
 
     this._drive.rateLimitedState.changed.connect(this._updateErrorPanel, this);
+
   }
 
   /**
    * An editable widget hosting the current user name.
    */
   readonly userName: GitHubEditableName;
+
+  /**
+   * The GitHub base URL
+   */
+  get baseUrl(): string {
+    return this._baseUrl;
+  }
+
+  /**
+   * The GitHub base URL is set by the settingsRegistry change hook
+   */
+  set baseUrl(url: string) {
+    this._baseUrl = url;
+  }
 
   /**
    * React to a change in user.
@@ -244,6 +259,7 @@ class GitHubFileBrowser extends Widget {
 
   private _browser: FileBrowser;
   private _drive: GitHubDrive;
+  private _baseUrl: string;
   private _errorPanel: GitHubErrorPanel | null;
   private _openGitHubButton: ToolbarButton;
   private _launchBinderButton: ToolbarButton;
