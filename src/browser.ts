@@ -127,9 +127,17 @@ class GitHubFileBrowser extends Widget {
 
   /**
    * The GitHub base URL
-   * Set by the settingsRegistry change hook
    */
-  baseUrl: string;
+  get baseUrl(): string {
+    return this._baseUrl;
+  }
+
+  /**
+   * The GitHub base URL is set by the settingsRegistry change hook
+   */
+  set baseUrl(url: string) {
+    this._baseUrl = url;
+  }
 
   /**
    * React to a change in user.
@@ -251,6 +259,7 @@ class GitHubFileBrowser extends Widget {
 
   private _browser: FileBrowser;
   private _drive: GitHubDrive;
+  private _baseUrl: string;
   private _errorPanel: GitHubErrorPanel | null;
   private _openGitHubButton: ToolbarButton;
   private _launchBinderButton: ToolbarButton;
