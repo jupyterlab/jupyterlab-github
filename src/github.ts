@@ -46,7 +46,12 @@ function browserApiRequest<T>(url: string): Promise<T> {
  */
 export
 function proxiedApiRequest<T>(url: string, settings: ServerConnection.ISettings): Promise<T> {
-  const fullURL = URLExt.join(settings.baseUrl, 'github', url);
+  // Safari can have problems with spurious redirects when there is a trailing
+  // slash before the query string, so don't add an empty part of the url.
+  const fullURL = url ?
+                  URLExt.join(settings.baseUrl, 'github', url) :
+                  URLExt.join(settings.baseUrl, 'github');
+
   return ServerConnection.makeRequest(fullURL, {}, settings).then(response => {
     if (response.status !== 200) {
       return response.json().then(data => {
