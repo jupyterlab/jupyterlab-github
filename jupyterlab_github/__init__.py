@@ -1,4 +1,4 @@
-import re, json
+import re, json, copy
 
 import tornado.gen as gen
 from tornado.httputil import url_concat
@@ -93,7 +93,8 @@ class GitHubHandler(APIHandler):
             # are loaded into the data buffer.
             next_page_path = self._maybe_get_next_page_path(response)
             while next_page_path:
-                request = HTTPRequest(next_page_path, user_agent='JupyterLab GitHub')
+                request = copy.copy(request)
+                request.url = next_page_path
                 response = yield client.fetch(request)
                 next_page_path = self._maybe_get_next_page_path(response)
                 data.extend(json.loads(response.body.decode('utf-8')))
