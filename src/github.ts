@@ -1,16 +1,11 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import {
-  URLExt
-} from '@jupyterlab/coreutils';
+import { URLExt } from '@jupyterlab/coreutils';
 
-import {
-  ServerConnection
-} from '@jupyterlab/services';
+import { ServerConnection } from '@jupyterlab/services';
 
-export
-const GITHUB_API = 'https://api.github.com';
+export const GITHUB_API = 'https://api.github.com';
 
 /**
  * Make a client-side request to the GitHub API.
@@ -20,8 +15,7 @@ const GITHUB_API = 'https://api.github.com';
  *
  * @returns a Promise resolved with the JSON response.
  */
-export
-function browserApiRequest<T>(url: string): Promise<T> {
+export function browserApiRequest<T>(url: string): Promise<T> {
   const requestUrl = URLExt.join(GITHUB_API, url);
   return window.fetch(requestUrl).then(response => {
     if (response.status !== 200) {
@@ -44,13 +38,15 @@ function browserApiRequest<T>(url: string): Promise<T> {
  *
  * @returns a Promise resolved with the JSON response.
  */
-export
-function proxiedApiRequest<T>(url: string, settings: ServerConnection.ISettings): Promise<T> {
+export function proxiedApiRequest<T>(
+  url: string,
+  settings: ServerConnection.ISettings
+): Promise<T> {
   // Safari can have problems with spurious redirects when there is a trailing
   // slash before the query string, so don't add an empty part of the url.
-  const fullURL = url ?
-                  URLExt.join(settings.baseUrl, 'github', url) :
-                  URLExt.join(settings.baseUrl, 'github');
+  const fullURL = url
+    ? URLExt.join(settings.baseUrl, 'github', url)
+    : URLExt.join(settings.baseUrl, 'github');
 
   return ServerConnection.makeRequest(fullURL, {}, settings).then(response => {
     if (response.status !== 200) {
@@ -66,8 +62,7 @@ function proxiedApiRequest<T>(url: string, settings: ServerConnection.ISettings)
  * Typings representing contents from the GitHub API v3.
  * Cf: https://developer.github.com/v3/repos/contents/
  */
-export
-class GitHubContents {
+export class GitHubContents {
   /**
    * The type of the file.
    */
@@ -114,7 +109,7 @@ class GitHubContents {
    * The raw download URL for the file.
    */
   // tslint:disable-next-line
-  download_url: string;  
+  download_url: string;
 
   /**
    * Unsure the purpose of these.
@@ -132,8 +127,7 @@ class GitHubContents {
  * Typings representing file contents from the GitHub API v3.
  * Cf: https://developer.github.com/v3/repos/contents/#response-if-content-is-a-file
  */
-export
-class GitHubFileContents extends GitHubContents {
+export class GitHubFileContents extends GitHubContents {
   /**
    * The type of the contents.
    */
@@ -153,8 +147,7 @@ class GitHubFileContents extends GitHubContents {
 /**
  * Typings representing a directory from the GitHub API v3.
  */
-export
-class GitHubDirectoryContents extends GitHubContents {
+export class GitHubDirectoryContents extends GitHubContents {
   /**
    * The type of the contents.
    */
@@ -165,8 +158,7 @@ class GitHubDirectoryContents extends GitHubContents {
  * Typings representing a blob from the GitHub API v3.
  * Cf: https://developer.github.com/v3/git/blobs/#response
  */
-export
-class GitHubBlob {
+export class GitHubBlob {
   /**
    * The base64-encoded contents of the file.
    */
@@ -193,13 +185,11 @@ class GitHubBlob {
   size: number;
 }
 
-
 /**
  * Typings representing symlink contents from the GitHub API v3.
  * Cf: https://developer.github.com/v3/repos/contents/#response-if-content-is-a-symlink
  */
-export
-class GitHubSymlinkContents extends GitHubContents {
+export class GitHubSymlinkContents extends GitHubContents {
   /**
    * The type of the contents.
    */
@@ -210,8 +200,7 @@ class GitHubSymlinkContents extends GitHubContents {
  * Typings representing submodule contents from the GitHub API v3.
  * Cf: https://developer.github.com/v3/repos/contents/#response-if-content-is-a-submodule
  */
-export
-class GitHubSubmoduleContents extends GitHubContents {
+export class GitHubSubmoduleContents extends GitHubContents {
   /**
    * The type of the contents.
    */
@@ -222,8 +211,7 @@ class GitHubSubmoduleContents extends GitHubContents {
  * Typings representing directory contents from the GitHub API v3.
  * Cf: https://developer.github.com/v3/repos/contents/#response-if-content-is-a-directory
  */
-export
-type GitHubDirectoryListing = GitHubContents[];
+export type GitHubDirectoryListing = GitHubContents[];
 
 /**
  * Typings representing repositories from the GitHub API v3.
@@ -232,8 +220,7 @@ type GitHubDirectoryListing = GitHubContents[];
  * #### Notes
  *   This is incomplete.
  */
-export
-class GitHubRepo {
+export class GitHubRepo {
   /**
    * ID for the repository.
    */

@@ -35,7 +35,7 @@
 
 .jp-GitHubBrowser .jp-GitHubEditableName-display:hover {
   border: 1px solid var(--jp-border-color1);
-  box-shadow: 0px 0px 2px 0px rgba(0,0,0,0.24);
+  box-shadow: 0px 0px 2px 0px rgba(0, 0, 0, 0.24);
 }
 
 .jp-GitHubBrowser .jp-GitHubEditableName-input {
@@ -106,7 +106,6 @@
 .jp-GitHubBrowser .jp-MyBinderButton-disabled {
   opacity: 0.3;
 }
-
 
 .jp-GitHubBrowser .jp-GitHubIcon {
   flex: 1 1;

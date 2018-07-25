@@ -1,40 +1,34 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import {
-  Signal, ISignal
-} from '@phosphor/signaling';
+import { Signal, ISignal } from '@phosphor/signaling';
+
+import { PathExt, URLExt } from '@jupyterlab/coreutils';
+
+import { DocumentRegistry } from '@jupyterlab/docregistry';
+
+import { ObservableValue } from '@jupyterlab/observables';
+
+import { Contents, ServerConnection } from '@jupyterlab/services';
 
 import {
-  PathExt, URLExt
-} from '@jupyterlab/coreutils';
-
-import {
-  DocumentRegistry
-} from '@jupyterlab/docregistry';
-
-import {
-  ObservableValue
-} from '@jupyterlab/observables';
-
-import {
-  Contents, ServerConnection,
-} from '@jupyterlab/services';
-
-import {
-  browserApiRequest, proxiedApiRequest, GITHUB_API, GitHubRepo,
-  GitHubContents, GitHubBlob, GitHubFileContents, GitHubDirectoryListing
+  browserApiRequest,
+  proxiedApiRequest,
+  GITHUB_API,
+  GitHubRepo,
+  GitHubContents,
+  GitHubBlob,
+  GitHubFileContents,
+  GitHubDirectoryListing
 } from './github';
 
 import * as base64js from 'base64-js';
-
 
 /**
  * A Contents.IDrive implementation that serves as a read-only
  * view onto GitHub repositories.
  */
-export
-class GitHubDrive implements Contents.IDrive {
+export class GitHubDrive implements Contents.IDrive {
   /**
    * Construct a new drive object.
    *
@@ -44,9 +38,7 @@ class GitHubDrive implements Contents.IDrive {
     this._serverSettings = ServerConnection.makeSettings();
     this._fileTypeForPath = (path: string) => {
       const types = registry.getFileTypesForPath(path);
-      return types.length === 0 ?
-             registry.getFileType('text')! :
-             types[0];
+      return types.length === 0 ? registry.getFileType('text')! : types[0];
     };
 
     // Test an api request to the notebook server
@@ -54,15 +46,19 @@ class GitHubDrive implements Contents.IDrive {
     // If so, use that. If not, warn the user and
     // use the client-side implementation.
     this._useProxy = new Promise<boolean>(resolve => {
-      proxiedApiRequest<any>('', this._serverSettings).then(() => {
-        resolve(true);
-      }).catch(() => {
-        console.warn('The JupyterLab GitHub server extension appears ' +
-                     'to be missing. If you do not install it with application ' +
-                     'credentials, you are likely to be rate limited by GitHub ' +
-                     'very quickly');
-        resolve(false);
-      });
+      proxiedApiRequest<any>('', this._serverSettings)
+        .then(() => {
+          resolve(true);
+        })
+        .catch(() => {
+          console.warn(
+            'The JupyterLab GitHub server extension appears ' +
+              'to be missing. If you do not install it with application ' +
+              'credentials, you are likely to be rate limited by GitHub ' +
+              'very quickly'
+          );
+          resolve(false);
+        });
     });
 
     // Initialize the rate-limited observable.
@@ -134,7 +130,10 @@ class GitHubDrive implements Contents.IDrive {
    *
    * @returns A promise which resolves with the file content.
    */
-  get(path: string, options?: Contents.IFetchOptions): Promise<Contents.IModel> {
+  get(
+    path: string,
+    options?: Contents.IFetchOptions
+  ): Promise<Contents.IModel> {
     const resource = parsePath(path);
     // If the org has not been set, return an empty directory
     // placeholder.
@@ -152,43 +151,60 @@ class GitHubDrive implements Contents.IDrive {
     // Otherwise identify the repository and get the contents of the
     // appropriate resource.
     const apiPath = URLExt.encodeParts(
-      URLExt.join('repos', resource.user, resource.repository,
-                  'contents', resource.path));
-    return this._apiRequest<GitHubContents>(apiPath).then(contents => {
-      // Set the states
-      this._validUser = true;
-      if (this.rateLimitedState.get() !== false) {
-        this.rateLimitedState.set(false);
-      }
-
-      return Private.gitHubContentsToJupyterContents(
-        path, contents, this._fileTypeForPath);
-    }).catch((err: ServerConnection.ResponseError) => {
-      if (err.response.status === 404) {
-        console.warn('GitHub: cannot find org/repo. ' +
-                     'Perhaps you misspelled something?');
-        this._validUser = false;
-        return Private.dummyDirectory;
-      } else if (err.response.status === 403 &&
-                 err.message.indexOf('rate limit') !== -1) {
-        if (this.rateLimitedState.get() !== true) {
-          this.rateLimitedState.set(true);
-        }
-        console.error(err.message);
-        return Promise.reject(err);
-      } else if (err.response.status === 403 &&
-                 err.message.indexOf('blob') !== -1) {
+      URLExt.join(
+        'repos',
+        resource.user,
+        resource.repository,
+        'contents',
+        resource.path
+      )
+    );
+    return this._apiRequest<GitHubContents>(apiPath)
+      .then(contents => {
         // Set the states
         this._validUser = true;
         if (this.rateLimitedState.get() !== false) {
           this.rateLimitedState.set(false);
         }
-        return this._getBlob(path);
-      } else {
-        console.error(err.message);
-        return Promise.reject(err);
-      }
-    });
+
+        return Private.gitHubContentsToJupyterContents(
+          path,
+          contents,
+          this._fileTypeForPath
+        );
+      })
+      .catch((err: ServerConnection.ResponseError) => {
+        if (err.response.status === 404) {
+          console.warn(
+            'GitHub: cannot find org/repo. ' +
+              'Perhaps you misspelled something?'
+          );
+          this._validUser = false;
+          return Private.dummyDirectory;
+        } else if (
+          err.response.status === 403 &&
+          err.message.indexOf('rate limit') !== -1
+        ) {
+          if (this.rateLimitedState.get() !== true) {
+            this.rateLimitedState.set(true);
+          }
+          console.error(err.message);
+          return Promise.reject(err);
+        } else if (
+          err.response.status === 403 &&
+          err.message.indexOf('blob') !== -1
+        ) {
+          // Set the states
+          this._validUser = true;
+          if (this.rateLimitedState.get() !== false) {
+            this.rateLimitedState.set(false);
+          }
+          return this._getBlob(path);
+        } else {
+          console.error(err.message);
+          return Promise.reject(err);
+        }
+      });
   }
 
   /**
@@ -217,16 +233,25 @@ class GitHubDrive implements Contents.IDrive {
     // Otherwise identify the repository and get the url of the
     // appropriate resource.
     const dirname = PathExt.dirname(resource.path);
-    const dirApiPath = URLExt.encodeParts(URLExt.join('repos', resource.user,
-                       resource.repository, 'contents', dirname));
-    return this._apiRequest<GitHubDirectoryListing>(dirApiPath).then(dirContents => {
-      for (let item of dirContents) {
-        if (item.path === resource.path) {
-          return item.download_url;
+    const dirApiPath = URLExt.encodeParts(
+      URLExt.join(
+        'repos',
+        resource.user,
+        resource.repository,
+        'contents',
+        dirname
+      )
+    );
+    return this._apiRequest<GitHubDirectoryListing>(dirApiPath).then(
+      dirContents => {
+        for (let item of dirContents) {
+          if (item.path === resource.path) {
+            return item.download_url;
+          }
         }
+        throw Private.makeError(404, `Cannot find file at ${resource.path}`);
       }
-      throw Private.makeError(404, `Cannot find file at ${resource.path}`);
-    });
+    );
   }
 
   /**
@@ -276,7 +301,10 @@ class GitHubDrive implements Contents.IDrive {
    * @returns A promise which resolves with the file content model when the
    *   file is saved.
    */
-  save(path: string, options: Partial<Contents.IModel>): Promise<Contents.IModel> {
+  save(
+    path: string,
+    options: Partial<Contents.IModel>
+  ): Promise<Contents.IModel> {
     return Promise.reject('Repository is read only');
   }
 
@@ -354,27 +382,48 @@ class GitHubDrive implements Contents.IDrive {
     // get the sha of the blob.
     const resource = parsePath(path);
     const dirname = PathExt.dirname(resource.path);
-    const dirApiPath = URLExt.encodeParts(URLExt.join('repos', resource.user,
-                       resource.repository, 'contents', dirname));
-    return this._apiRequest<GitHubDirectoryListing>(dirApiPath).then(dirContents => {
-      for (let item of dirContents) {
-        if (item.path === resource.path) {
-          blobData = item as GitHubFileContents;
-          return item.sha;
+    const dirApiPath = URLExt.encodeParts(
+      URLExt.join(
+        'repos',
+        resource.user,
+        resource.repository,
+        'contents',
+        dirname
+      )
+    );
+    return this._apiRequest<GitHubDirectoryListing>(dirApiPath)
+      .then(dirContents => {
+        for (let item of dirContents) {
+          if (item.path === resource.path) {
+            blobData = item as GitHubFileContents;
+            return item.sha;
+          }
         }
-      }
-      throw Error('Cannot find sha for blob');
-    }).then(sha => {
-      // Once we have the sha, form the api url and make the request.
-      const blobApiPath = URLExt.encodeParts(URLExt.join(
-        'repos', resource.user, resource.repository, 'git', 'blobs', sha));
-      return this._apiRequest<GitHubBlob>(blobApiPath);
-    }).then(blob => {
-      // Convert the data to a Contents.IModel.
-      blobData.content = blob.content;
-      return Private.gitHubContentsToJupyterContents(
-        path, blobData, this._fileTypeForPath);
-    });
+        throw Error('Cannot find sha for blob');
+      })
+      .then(sha => {
+        // Once we have the sha, form the api url and make the request.
+        const blobApiPath = URLExt.encodeParts(
+          URLExt.join(
+            'repos',
+            resource.user,
+            resource.repository,
+            'git',
+            'blobs',
+            sha
+          )
+        );
+        return this._apiRequest<GitHubBlob>(blobApiPath);
+      })
+      .then(blob => {
+        // Convert the data to a Contents.IModel.
+        blobData.content = blob.content;
+        return Private.gitHubContentsToJupyterContents(
+          path,
+          blobData,
+          this._fileTypeForPath
+        );
+      });
   }
 
   /**
@@ -384,54 +433,64 @@ class GitHubDrive implements Contents.IDrive {
     // First, check if the `user` string is actually an org.
     // If will return with an error if not, and we can try
     // the user path.
-    const apiPath = URLExt.encodeParts(
-      URLExt.join('orgs', user, 'repos'));
-    return this._apiRequest<GitHubRepo[]>(apiPath).catch( err => {
-      // If we can't find the org, it may be a user.
-      if (err.response.status === 404) {
-        // Check if it is the authenticated user.
-        return this._apiRequest<any>('user').then(currentUser => {
-          let reposPath: string;
-          // If we are looking at the currently authenticated user,
-          // get all the repositories they own, which includes private ones.
-          if (currentUser.login === user) {
-            reposPath = URLExt.join('user', 'repos', '?type=owner');
-          } else {
-            reposPath = URLExt.encodeParts(URLExt.join('users', user, 'repos'));
-          }
-          return this._apiRequest<GitHubRepo[]>(reposPath);
-        }).catch(err => {
-          // If there is no authenticated user, return the public
-          // users api path.
-          if (err.response.status === 401) {
-            const reposPath =
-              URLExt.encodeParts(URLExt.join('users', user, 'repos'));
-            return this._apiRequest<GitHubRepo[]>(reposPath);
-          }
-          throw err;
-        });
-      }
-      throw err;
-    }).then(repos => {
-      // Set the states
-      this._validUser = true;
-      if (this.rateLimitedState.get() !== false) {
-        this.rateLimitedState.set(false);
-      }
-      return Private.reposToDirectory(repos);
-    }).catch(err => {
-      if (err.response.status === 403 &&
-          err.message.indexOf('rate limit') !== -1) {
-        if (this.rateLimitedState.get() !== true) {
-          this.rateLimitedState.set(true);
+    const apiPath = URLExt.encodeParts(URLExt.join('orgs', user, 'repos'));
+    return this._apiRequest<GitHubRepo[]>(apiPath)
+      .catch(err => {
+        // If we can't find the org, it may be a user.
+        if (err.response.status === 404) {
+          // Check if it is the authenticated user.
+          return this._apiRequest<any>('user')
+            .then(currentUser => {
+              let reposPath: string;
+              // If we are looking at the currently authenticated user,
+              // get all the repositories they own, which includes private ones.
+              if (currentUser.login === user) {
+                reposPath = URLExt.join('user', 'repos', '?type=owner');
+              } else {
+                reposPath = URLExt.encodeParts(
+                  URLExt.join('users', user, 'repos')
+                );
+              }
+              return this._apiRequest<GitHubRepo[]>(reposPath);
+            })
+            .catch(err => {
+              // If there is no authenticated user, return the public
+              // users api path.
+              if (err.response.status === 401) {
+                const reposPath = URLExt.encodeParts(
+                  URLExt.join('users', user, 'repos')
+                );
+                return this._apiRequest<GitHubRepo[]>(reposPath);
+              }
+              throw err;
+            });
         }
-      } else {
-        console.warn('GitHub: cannot find user. ' +
-                     'Perhaps you misspelled something?');
-        this._validUser = false;
-      }
-      return Private.dummyDirectory;
-    });
+        throw err;
+      })
+      .then(repos => {
+        // Set the states
+        this._validUser = true;
+        if (this.rateLimitedState.get() !== false) {
+          this.rateLimitedState.set(false);
+        }
+        return Private.reposToDirectory(repos);
+      })
+      .catch(err => {
+        if (
+          err.response.status === 403 &&
+          err.message.indexOf('rate limit') !== -1
+        ) {
+          if (this.rateLimitedState.get() !== true) {
+            this.rateLimitedState.set(true);
+          }
+        } else {
+          console.warn(
+            'GitHub: cannot find user. ' + 'Perhaps you misspelled something?'
+          );
+          this._validUser = false;
+        }
+        return Private.dummyDirectory;
+      });
   }
 
   /**
@@ -459,8 +518,7 @@ class GitHubDrive implements Contents.IDrive {
 /**
  * Specification for a file in a repository.
  */
-export
-interface IGitHubResource {
+export interface IGitHubResource {
   /**
    * The user or organization for the resource.
    */
@@ -477,12 +535,10 @@ interface IGitHubResource {
   readonly path: string;
 }
 
-
 /**
  * Parse a path into a IGitHubResource.
  */
-export
-function parsePath(path: string): IGitHubResource {
+export function parsePath(path: string): IGitHubResource {
   const parts = path.split('/');
   const user = parts.length > 0 ? parts[0] : '';
   const repository = parts.length > 1 ? parts[1] : '';
@@ -498,8 +554,7 @@ namespace Private {
    * A dummy contents model indicating an invalid or
    * nonexistent repository.
    */
-  export
-  const dummyDirectory: Contents.IModel = {
+  export const dummyDirectory: Contents.IModel = {
     type: 'directory',
     path: '',
     name: '',
@@ -508,7 +563,7 @@ namespace Private {
     created: '',
     writable: false,
     last_modified: '',
-    mimetype: '',
+    mimetype: ''
   };
 
   /**
@@ -525,8 +580,11 @@ namespace Private {
    *
    * @returns a Contents.IModel object.
    */
-  export
-  function gitHubContentsToJupyterContents(path: string, contents: GitHubContents | GitHubContents[], fileTypeForPath: (path: string) => DocumentRegistry.IFileType): Contents.IModel {
+  export function gitHubContentsToJupyterContents(
+    path: string,
+    contents: GitHubContents | GitHubContents[],
+    fileTypeForPath: (path: string) => DocumentRegistry.IFileType
+  ): Contents.IModel {
     if (Array.isArray(contents)) {
       // If we have an array, it is a directory of GitHubContents.
       // Iterate over that and convert all of the items in the array/
@@ -539,9 +597,12 @@ namespace Private {
         created: '',
         last_modified: '',
         mimetype: '',
-        content: contents.map( c => {
+        content: contents.map(c => {
           return gitHubContentsToJupyterContents(
-            PathExt.join(path, c.name), c, fileTypeForPath);
+            PathExt.join(path, c.name),
+            c,
+            fileTypeForPath
+          );
         })
       } as Contents.IModel;
     } else if (contents.type === 'file' || contents.type === 'symlink') {
@@ -551,17 +612,19 @@ namespace Private {
       let content: any;
       switch (fileType.fileFormat) {
         case 'text':
-          content = fileContents !== undefined ?
-            Private.b64DecodeUTF8(fileContents) :
-            null;
+          content =
+            fileContents !== undefined
+              ? Private.b64DecodeUTF8(fileContents)
+              : null;
           break;
         case 'base64':
           content = fileContents !== undefined ? fileContents : null;
           break;
         case 'json':
-          content = fileContents !== undefined ?
-            JSON.parse(Private.b64DecodeUTF8(fileContents)) :
-            null;
+          content =
+            fileContents !== undefined
+              ? JSON.parse(Private.b64DecodeUTF8(fileContents))
+              : null;
           break;
         default:
           throw new Error(`Unexpected file format: ${fileType.fileFormat}`);
@@ -597,9 +660,15 @@ namespace Private {
       // reported as `file`: https://github.com/github/developer.github.com/commit/1b329b04cece9f3087faa7b1e0382317a9b93490
       // This means submodules will show up in the listing, but we still should not
       // open them.
-      throw makeError(400, `Cannot open "${contents.name}" because it is a submodule`);
+      throw makeError(
+        400,
+        `Cannot open "${contents.name}" because it is a submodule`
+      );
     } else {
-      throw makeError(500, `"${contents.name}" has and unexpected type: ${contents.type}`);
+      throw makeError(
+        500,
+        `"${contents.name}" has and unexpected type: ${contents.type}`
+      );
     }
   }
 
@@ -612,10 +681,9 @@ namespace Private {
    *
    * @returns a Contents.IModel object.
    */
-  export
-  function reposToDirectory(repos: GitHubRepo[]): Contents.IModel {
+  export function reposToDirectory(repos: GitHubRepo[]): Contents.IModel {
     // If it is a directory, convert to that.
-    let content: Contents.IModel[] = repos.map( repo => {
+    let content: Contents.IModel[] = repos.map(repo => {
       return {
         name: repo.name,
         path: repo.name,
@@ -646,9 +714,14 @@ namespace Private {
    * Wrap an API error in a hacked-together error object
    * masquerading as an `ServerConnection.ResponseError`.
    */
-  export
-  function makeError(code: number, message: string): ServerConnection.ResponseError {
-    const response = new Response(message, { status: code, statusText: message });
+  export function makeError(
+    code: number,
+    message: string
+  ): ServerConnection.ResponseError {
+    const response = new Response(message, {
+      status: code,
+      statusText: message
+    });
     return new ServerConnection.ResponseError(response, message);
   }
 
@@ -662,8 +735,7 @@ namespace Private {
    *
    * See https://developer.mozilla.org/en-US/docs/Web/API/WindowBase64/Base64_encoding_and_decoding#Solution_2_%E2%80%93_rewrite_the_DOMs_atob()_and_btoa()_using_JavaScript's_TypedArrays_and_UTF-8
    */
-  export
-  function b64DecodeUTF8(str: string): string {
+  export function b64DecodeUTF8(str: string): string {
     const bytes = base64js.toByteArray(str.replace(/\n/g, ''));
     return decoder.decode(bytes);
   }

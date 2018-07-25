@@ -2,28 +2,20 @@
 // Distributed under the terms of the Modified BSD License.
 
 import {
-  ILayoutRestorer, JupyterLab, JupyterLabPlugin
+  ILayoutRestorer,
+  JupyterLab,
+  JupyterLabPlugin
 } from '@jupyterlab/application';
 
-import {
-  ISettingRegistry
-} from '@jupyterlab/coreutils';
+import { ISettingRegistry } from '@jupyterlab/coreutils';
 
-import {
-  IDocumentManager
-} from '@jupyterlab/docmanager';
+import { IDocumentManager } from '@jupyterlab/docmanager';
 
-import {
-  IFileBrowserFactory
-} from '@jupyterlab/filebrowser';
+import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
 
-import {
-  GitHubDrive
-} from './contents';
+import { GitHubDrive } from './contents';
 
-import {
-  GitHubFileBrowser, DEFAULT_GITHUB_BASE_URL
-} from './browser';
+import { GitHubFileBrowser, DEFAULT_GITHUB_BASE_URL } from './browser';
 
 import '../style/index.css';
 
@@ -42,7 +34,12 @@ const PLUGIN_ID = '@jupyterlab/github:drive';
  */
 const fileBrowserPlugin: JupyterLabPlugin<void> = {
   id: PLUGIN_ID,
-  requires: [IDocumentManager, IFileBrowserFactory, ILayoutRestorer, ISettingRegistry],
+  requires: [
+    IDocumentManager,
+    IFileBrowserFactory,
+    ILayoutRestorer,
+    ISettingRegistry
+  ],
   activate: activateFileBrowser,
   autoStart: true
 };
@@ -50,7 +47,13 @@ const fileBrowserPlugin: JupyterLabPlugin<void> = {
 /**
  * Activate the file browser.
  */
-function activateFileBrowser(app: JupyterLab, manager: IDocumentManager, factory: IFileBrowserFactory, restorer: ILayoutRestorer, settingRegistry: ISettingRegistry): void {
+function activateFileBrowser(
+  app: JupyterLab,
+  manager: IDocumentManager,
+  factory: IFileBrowserFactory,
+  restorer: ILayoutRestorer,
+  settingRegistry: ISettingRegistry
+): void {
   const { commands } = app;
 
   // Add the GitHub backend to the contents manager.
@@ -72,24 +75,30 @@ function activateFileBrowser(app: JupyterLab, manager: IDocumentManager, factory
   app.shell.addToLeftArea(gitHubBrowser, { rank: 102 });
 
   const onSettingsUpdated = (settings: ISettingRegistry.ISettings) => {
-    const baseUrl = settings.get('baseUrl').composite as string | null | undefined;
+    const baseUrl = settings.get('baseUrl').composite as
+      | string
+      | null
+      | undefined;
     gitHubBrowser.baseUrl = baseUrl || DEFAULT_GITHUB_BASE_URL;
   };
 
   // Fetch the initial state of the settings.
   Promise.all([settingRegistry.load(PLUGIN_ID), app.restored])
-  .then(([settings]) => {
-    settings.changed.connect(onSettingsUpdated);
-    onSettingsUpdated(settings);
-    const defaultRepo = settings.get('defaultRepo').composite as string | null;
-    if (defaultRepo) {
-      browser.model.restored.then( () => {
-        browser.model.cd(`/${defaultRepo}`);
-      });
-    }
-  }).catch((reason: Error) => {
-    console.error(reason.message);
-  });
+    .then(([settings]) => {
+      settings.changed.connect(onSettingsUpdated);
+      onSettingsUpdated(settings);
+      const defaultRepo = settings.get('defaultRepo').composite as
+        | string
+        | null;
+      if (defaultRepo) {
+        browser.model.restored.then(() => {
+          browser.model.cd(`/${defaultRepo}`);
+        });
+      }
+    })
+    .catch((reason: Error) => {
+      console.error(reason.message);
+    });
 
   return;
 }

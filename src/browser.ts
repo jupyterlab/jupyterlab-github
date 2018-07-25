@@ -1,34 +1,19 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import {
-  find
-} from '@phosphor/algorithm';
+import { find } from '@phosphor/algorithm';
 
-import {
-  PanelLayout, Widget
-} from '@phosphor/widgets';
+import { PanelLayout, Widget } from '@phosphor/widgets';
 
-import {
-  ToolbarButton
-} from '@jupyterlab/apputils';
+import { ToolbarButton } from '@jupyterlab/apputils';
 
-import {
-  URLExt
-} from '@jupyterlab/coreutils';
+import { URLExt } from '@jupyterlab/coreutils';
 
-import {
-  FileBrowser
-} from '@jupyterlab/filebrowser';
+import { FileBrowser } from '@jupyterlab/filebrowser';
 
-import {
-  ObservableValue
-} from '@jupyterlab/observables';
+import { ObservableValue } from '@jupyterlab/observables';
 
-import {
-  GitHubDrive, parsePath
-} from './contents';
-
+import { GitHubDrive, parsePath } from './contents';
 
 /**
  * The base url for a mybinder deployment.
@@ -48,8 +33,7 @@ const MY_BINDER_DISABLED = 'jp-MyBinderButton-disabled';
 /**
  * Widget for hosting the GitHub filebrowser.
  */
-export
-class GitHubFileBrowser extends Widget {
+export class GitHubFileBrowser extends Widget {
   constructor(browser: FileBrowser, drive: GitHubDrive) {
     super();
     this.addClass('jp-GitHubBrowser');
@@ -63,7 +47,10 @@ class GitHubFileBrowser extends Widget {
     this.userName.addClass('jp-GitHubEditableUserName');
     this.userName.node.title = 'Click to edit user/organization';
     this._browser.toolbar.addItem('user', this.userName);
-    this.userName.name.changed.connect(this._onUserChanged, this);
+    this.userName.name.changed.connect(
+      this._onUserChanged,
+      this
+    );
     this.baseUrl = DEFAULT_GITHUB_BASE_URL;
     // Create a button that opens GitHub at the appropriate
     // repo+directory.
@@ -75,13 +62,19 @@ class GitHubFileBrowser extends Widget {
           window.open(url);
           return;
         }
-        const localPath = this._browser.model.manager.services.contents
-          .localPath(this._browser.model.path);
+        const localPath = this._browser.model.manager.services.contents.localPath(
+          this._browser.model.path
+        );
         const resource = parsePath(localPath);
         url = URLExt.join(url, resource.user);
         if (resource.repository) {
-          url = URLExt.join(url, resource.repository,
-                            'tree', 'master', resource.path);
+          url = URLExt.join(
+            url,
+            resource.repository,
+            'tree',
+            'master',
+            resource.path
+          );
         }
         window.open(url);
       },
@@ -97,11 +90,16 @@ class GitHubFileBrowser extends Widget {
         if (!this._binderActive) {
           return;
         }
-        const localPath = this._browser.model.manager.services.contents
-          .localPath(this._browser.model.path);
+        const localPath = this._browser.model.manager.services.contents.localPath(
+          this._browser.model.path
+        );
         const resource = parsePath(localPath);
-        const url = URLExt.join(MY_BINDER_BASE_URL, resource.user,
-                                resource.repository, 'master');
+        const url = URLExt.join(
+          MY_BINDER_BASE_URL,
+          resource.user,
+          resource.repository,
+          'master'
+        );
         // Attempt to open using the JupyterLab tree handler
         const tree = URLExt.join('lab', 'tree', resource.path);
         window.open(url + `?urlpath=${tree}`);
@@ -112,12 +110,17 @@ class GitHubFileBrowser extends Widget {
     this._browser.toolbar.addItem('binder', this._launchBinderButton);
 
     // Set up a listener to check if we can launch mybinder.
-    this._browser.model.pathChanged.connect(this._onPathChanged, this);
+    this._browser.model.pathChanged.connect(
+      this._onPathChanged,
+      this
+    );
     // Trigger an initial pathChanged to check for binder state.
     this._onPathChanged();
 
-    this._drive.rateLimitedState.changed.connect(this._updateErrorPanel, this);
-
+    this._drive.rateLimitedState.changed.connect(
+      this._updateErrorPanel,
+      this
+    );
   }
 
   /**
@@ -142,7 +145,10 @@ class GitHubFileBrowser extends Widget {
   /**
    * React to a change in user.
    */
-  private _onUserChanged(sender: ObservableValue, args: ObservableValue.IChangedArgs) {
+  private _onUserChanged(
+    sender: ObservableValue,
+    args: ObservableValue.IChangedArgs
+  ) {
     if (this._changeGuard) {
       return;
     }
@@ -165,8 +171,9 @@ class GitHubFileBrowser extends Widget {
    * React to the path changing for the browser.
    */
   private _onPathChanged(): void {
-    const localPath = this._browser.model.manager.services.contents
-      .localPath(this._browser.model.path);
+    const localPath = this._browser.model.manager.services.contents.localPath(
+      this._browser.model.path
+    );
     const resource = parsePath(localPath);
 
     // If we are not already changing the user name, set it.
@@ -196,10 +203,14 @@ class GitHubFileBrowser extends Widget {
     // Figure out some way around this.
     if (resource.path === '') {
       const item = find(this._browser.model.items(), i => {
-        return i.name === 'requirements.txt' || i.name === 'environment.yml' ||
-               i.name === 'apt.txt' || i.name === 'REQUIRE' ||
-               i.name === 'Dockerfile' ||
-               (i.name === 'binder' && i.type === 'directory');
+        return (
+          i.name === 'requirements.txt' ||
+          i.name === 'environment.yml' ||
+          i.name === 'apt.txt' ||
+          i.name === 'REQUIRE' ||
+          i.name === 'Dockerfile' ||
+          (i.name === 'binder' && i.type === 'directory')
+        );
       });
       if (item) {
         this._launchBinderButton.removeClass(MY_BINDER_DISABLED);
@@ -220,8 +231,9 @@ class GitHubFileBrowser extends Widget {
    * React to a change in the validity of the drive.
    */
   private _updateErrorPanel(): void {
-    const localPath = this._browser.model.manager.services.contents
-      .localPath(this._browser.model.path);
+    const localPath = this._browser.model.manager.services.contents.localPath(
+      this._browser.model.path
+    );
     const resource = parsePath(localPath);
     const rateLimited = this._drive.rateLimitedState.get();
     const validUser = this._drive.validUser;
@@ -238,8 +250,9 @@ class GitHubFileBrowser extends Widget {
     if (rateLimited) {
       this._errorPanel = new GitHubErrorPanel(
         'You have been rate limited by GitHub! ' +
-        'You will need to wait about an hour before ' +
-        'continuing');
+          'You will need to wait about an hour before ' +
+          'continuing'
+      );
       const listing = (this._browser.layout as PanelLayout).widgets[2];
       listing.node.appendChild(this._errorPanel.node);
       return;
@@ -247,9 +260,9 @@ class GitHubFileBrowser extends Widget {
 
     // If we have an invalid user, make an error panel.
     if (!validUser) {
-      const message = resource.user ?
-        `"${resource.user}" appears to be an invalid user name!` :
-        'Please enter a GitHub user name';
+      const message = resource.user
+        ? `"${resource.user}" appears to be an invalid user name!`
+        : 'Please enter a GitHub user name';
       this._errorPanel = new GitHubErrorPanel(message);
       const listing = (this._browser.layout as PanelLayout).widgets[2];
       listing.node.appendChild(this._errorPanel.node);
@@ -272,8 +285,7 @@ class GitHubFileBrowser extends Widget {
  * used to host the currently active GitHub
  * user name.
  */
-export
-class GitHubEditableName extends Widget {
+export class GitHubEditableName extends Widget {
   constructor(initialName: string = '', placeholder?: string) {
     super();
     this.addClass('jp-GitHubEditableName');
@@ -304,7 +316,7 @@ class GitHubEditableName extends Widget {
     this.name.changed.connect((s, args) => {
       if (args.oldValue !== args.newValue) {
         this._nameNode.textContent =
-          args.newValue as string || this._placeholder;
+          (args.newValue as string) || this._placeholder;
       }
     });
   }
@@ -314,8 +326,7 @@ class GitHubEditableName extends Widget {
    */
   readonly name: ObservableValue;
 
-
-  private _pending  = false;
+  private _pending = false;
   private _placeholder: string;
   private _nameNode: HTMLElement;
   private _editNode: HTMLInputElement;
@@ -326,8 +337,7 @@ class GitHubEditableName extends Widget {
  * used if there is an invalid user name or if we
  * are being rate-limited.
  */
-export
-class GitHubErrorPanel extends Widget {
+export class GitHubErrorPanel extends Widget {
   constructor(message: string) {
     super();
     this.addClass('jp-GitHubErrorPanel');
@@ -341,13 +351,11 @@ class GitHubErrorPanel extends Widget {
   }
 }
 
-
 /**
  * A module-Private namespace.
  */
 namespace Private {
-  export
-  /**
+  export /**
    * Given a text node and an input element, replace the text
    * node wiht the input element, allowing the user to reset the
    * value of the text node.
@@ -359,7 +367,10 @@ namespace Private {
    * @returns a Promise that resolves when the editing is complete,
    *   or has been canceled.
    */
-  function changeField(text: HTMLElement, edit: HTMLInputElement): Promise<string> {
+  function changeField(
+    text: HTMLElement,
+    edit: HTMLInputElement
+  ): Promise<string> {
     // Replace the text node with an the input element.
     let parent = text.parentElement as HTMLElement;
     let initialValue = text.textContent || '';
@@ -385,19 +396,19 @@ namespace Private {
       };
       edit.onkeydown = (event: KeyboardEvent) => {
         switch (event.keyCode) {
-        case 13:  // Enter
-          event.stopPropagation();
-          event.preventDefault();
-          edit.blur();
-          break;
-        case 27:  // Escape
-          event.stopPropagation();
-          event.preventDefault();
-          edit.value = initialValue;
-          edit.blur();
-          break;
-        default:
-          break;
+          case 13: // Enter
+            event.stopPropagation();
+            event.preventDefault();
+            edit.blur();
+            break;
+          case 27: // Escape
+            event.stopPropagation();
+            event.preventDefault();
+            edit.value = initialValue;
+            edit.blur();
+            break;
+          default:
+            break;
         }
       };
     });
