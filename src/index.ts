@@ -67,7 +67,7 @@ function activateFileBrowser(
 
   const gitHubBrowser = new GitHubFileBrowser(browser, drive);
 
-  gitHubBrowser.title.iconClass = 'jp-GitHub-tablogo';
+  gitHubBrowser.title.iconClass = 'jp-GitHub-icon jp-SideBar-tabIcon';
   gitHubBrowser.id = 'github-file-browser';
 
   // Add the file browser widget to the application restorer.
