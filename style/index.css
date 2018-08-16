@@ -92,7 +92,6 @@
 }
 
 .jp-GitHubBrowser .jp-MyBinderButton {
-  flex: 1 1;
   background-image: url(binder.svg);
 }
 
@@ -104,8 +103,4 @@
   background-size: 85%;
   background-repeat: no-repeat;
   background-position: center;
-}
-
-.jp-GitHubBrowser .jp-GitHubIcon {
-  flex: 1 1;
 }
