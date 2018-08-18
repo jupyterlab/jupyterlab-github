@@ -60,14 +60,21 @@ function activateFileBrowser(
   const drive = new GitHubDrive(app.docRegistry);
   manager.services.contents.addDrive(drive);
 
+  // Create the embedded filebrowser. GitHub repos likely
+  // don't need as often of a refresh interval as normal ones,
+  // and rate-limiting can be an issue, so we give a 5 minute
+  // refresh interval.
   const browser = factory.createFileBrowser(NAMESPACE, {
     commands,
-    driveName: drive.name
+    driveName: drive.name,
+    refreshInterval: 300000
   });
 
   const gitHubBrowser = new GitHubFileBrowser(browser, drive);
 
-  gitHubBrowser.title.iconClass = 'jp-GitHub-tablogo';
+  gitHubBrowser.title.iconClass = 'jp-GitHub-icon jp-SideBar-tabIcon';
+  gitHubBrowser.title.caption = 'Browse GitHub';
+
   gitHubBrowser.id = 'github-file-browser';
 
   // Add the file browser widget to the application restorer.

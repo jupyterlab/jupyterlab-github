@@ -1,5 +1,5 @@
 {
-  "jupyter.lab.setting-icon-class": "jp-GitHub-tablogo",
+  "jupyter.lab.setting-icon-class": "jp-GitHub-icon",
   "jupyter.lab.setting-icon-label": "GitHub",
   "title": "GitHub",
   "description": "Settings for the GitHub plugin.",

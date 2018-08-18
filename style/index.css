@@ -3,11 +3,12 @@
 | Distributed under the terms of the Modified BSD License.
 |----------------------------------------------------------------------------*/
 
-.jp-GitHub-tablogo {
-  background-size: 100%;
-  width: var(--jp-private-sidebar-tab-width);
-  height: var(--jp-private-sidebar-tab-width);
-  background-image: url(octocat.png);
+[data-theme-light='true'] .jp-GitHub-icon {
+  background-image: url(octocat-light.svg);
+}
+
+[data-theme-light='false'] .jp-GitHub-icon {
+  background-image: url(octocat-dark.svg);
 }
 
 .jp-GitHubBrowser {
@@ -31,11 +32,11 @@
 
 .jp-GitHubBrowser .jp-GitHubEditableName-display {
   border: 1px solid transparent;
+  width: 100%;
 }
 
 .jp-GitHubBrowser .jp-GitHubEditableName-display:hover {
   border: 1px solid var(--jp-border-color1);
-  box-shadow: 0px 0px 2px 0px rgba(0, 0, 0, 0.24);
 }
 
 .jp-GitHubBrowser .jp-GitHubEditableName-input {
@@ -46,19 +47,11 @@
   width: 100%;
 }
 
-.jp-GitHubBrowser .jp-Toolbar-button.jp-RefreshIcon {
-  display: none;
+.jp-GitHubBrowser .jp-ToolbarButton.jp-Toolbar-item.jp-GitHub-toolbar-item {
+  display: block;
 }
 
-.jp-GitHubBrowser .jp-Toolbar-button.jp-AddIcon {
-  display: none;
-}
-
-.jp-GitHubBrowser .jp-Toolbar-button.jp-newFolderIcon {
-  display: none;
-}
-
-.jp-GitHubBrowser .jp-Toolbar-button.jp-id-upload {
+.jp-GitHubBrowser .jp-ToolbarButton.jp-Toolbar-item {
   display: none;
 }
 
@@ -99,7 +92,6 @@
 }
 
 .jp-GitHubBrowser .jp-MyBinderButton {
-  flex: 1 1;
   background-image: url(binder.svg);
 }
 
@@ -107,7 +99,8 @@
   opacity: 0.3;
 }
 
-.jp-GitHubBrowser .jp-GitHubIcon {
-  flex: 1 1;
-  background-image: url(octocat.png);
+#setting-editor .jp-PluginList-icon.jp-GitHub-icon {
+  background-size: 85%;
+  background-repeat: no-repeat;
+  background-position: center;
 }

@@ -445,7 +445,7 @@ export class GitHubDrive implements Contents.IDrive {
               // If we are looking at the currently authenticated user,
               // get all the repositories they own, which includes private ones.
               if (currentUser.login === user) {
-                reposPath = URLExt.join('user', 'repos', '?type=owner');
+                reposPath = 'user/repos?type=owner';
               } else {
                 reposPath = URLExt.encodeParts(
                   URLExt.join('users', user, 'repos')

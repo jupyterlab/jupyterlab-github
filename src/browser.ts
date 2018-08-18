@@ -78,9 +78,10 @@ export class GitHubFileBrowser extends Widget {
         }
         window.open(url);
       },
-      className: 'jp-GitHubIcon',
+      iconClassName: 'jp-GitHub-icon jp-Icon jp-Icon-16',
       tooltip: 'Open this repository on GitHub'
     });
+    this._openGitHubButton.addClass('jp-GitHub-toolbar-item');
     this._browser.toolbar.addItem('GitHub', this._openGitHubButton);
 
     // Create a button the opens MyBinder to the appropriate repo.
@@ -105,9 +106,22 @@ export class GitHubFileBrowser extends Widget {
         window.open(url + `?urlpath=${tree}`);
       },
       tooltip: 'Launch this repository on mybinder.org',
-      className: 'jp-MyBinderButton'
+      iconClassName: 'jp-MyBinderButton jp-Icon jp-Icon-16'
     });
+    this._launchBinderButton.addClass('jp-GitHub-toolbar-item');
     this._browser.toolbar.addItem('binder', this._launchBinderButton);
+
+    // Add our own refresh button, since the other one is hidden
+    // via CSS.
+    let refresher = new ToolbarButton({
+      iconClassName: 'jp-RefreshIcon jp-Icon jp-Icon-16',
+      onClick: () => {
+        this._browser.model.refresh();
+      },
+      tooltip: 'Refresh File List'
+    });
+    refresher.addClass('jp-GitHub-toolbar-item');
+    this._browser.toolbar.addItem('gh-refresher', refresher);
 
     // Set up a listener to check if we can launch mybinder.
     this._browser.model.pathChanged.connect(
@@ -355,7 +369,7 @@ export class GitHubErrorPanel extends Widget {
  * A module-Private namespace.
  */
 namespace Private {
-  export /**
+  /**
    * Given a text node and an input element, replace the text
    * node wiht the input element, allowing the user to reset the
    * value of the text node.
@@ -367,7 +381,7 @@ namespace Private {
    * @returns a Promise that resolves when the editing is complete,
    *   or has been canceled.
    */
-  function changeField(
+  export function changeField(
     text: HTMLElement,
     edit: HTMLInputElement
   ): Promise<string> {
