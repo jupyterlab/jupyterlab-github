@@ -111,6 +111,18 @@ export class GitHubFileBrowser extends Widget {
     this._launchBinderButton.addClass('jp-GitHub-toolbar-item');
     this._browser.toolbar.addItem('binder', this._launchBinderButton);
 
+    // Add our own refresh button, since the other one is hidden
+    // via CSS.
+    let refresher = new ToolbarButton({
+      iconClassName: 'jp-RefreshIcon jp-Icon jp-Icon-16',
+      onClick: () => {
+        this._browser.model.refresh();
+      },
+      tooltip: 'Refresh File List'
+    });
+    refresher.addClass('jp-GitHub-toolbar-item');
+    this._browser.toolbar.addItem('gh-refresher', refresher);
+
     // Set up a listener to check if we can launch mybinder.
     this._browser.model.pathChanged.connect(
       this._onPathChanged,
