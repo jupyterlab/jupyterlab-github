@@ -4,15 +4,21 @@
   "title": "GitHub",
   "description": "Settings for the GitHub plugin.",
   "properties": {
-    "defaultRepo": {
-      "type": "string",
-      "title": "Default Repository",
-      "default": ""
-    },
     "baseUrl": {
       "type": "string",
       "title": "The GitHub Base URL",
       "default": "https://github.com"
+    },
+    "accessToken": {
+      "type": "string",
+      "title": "A GitHub Personal Access Token",
+      "description": "https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/#creating-a-token",
+      "default": ""
+    },
+    "defaultRepo": {
+      "type": "string",
+      "title": "Default Repository",
+      "default": ""
     }
   },
   "type": "object"

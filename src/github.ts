@@ -5,8 +5,6 @@ import { URLExt } from '@jupyterlab/coreutils';
 
 import { ServerConnection } from '@jupyterlab/services';
 
-export const GITHUB_API = 'https://api.github.com';
-
 /**
  * Make a client-side request to the GitHub API.
  *
@@ -16,8 +14,7 @@ export const GITHUB_API = 'https://api.github.com';
  * @returns a Promise resolved with the JSON response.
  */
 export function browserApiRequest<T>(url: string): Promise<T> {
-  const requestUrl = URLExt.join(GITHUB_API, url);
-  return window.fetch(requestUrl).then(response => {
+  return window.fetch(url).then(response => {
     if (response.status !== 200) {
       return response.json().then(data => {
         throw new ServerConnection.ResponseError(response, data.message);

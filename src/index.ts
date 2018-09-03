@@ -13,9 +13,9 @@ import { IDocumentManager } from '@jupyterlab/docmanager';
 
 import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
 
-import { GitHubDrive } from './contents';
+import { GitHubDrive, DEFAULT_GITHUB_BASE_URL } from './contents';
 
-import { GitHubFileBrowser, DEFAULT_GITHUB_BASE_URL } from './browser';
+import { GitHubFileBrowser } from './browser';
 
 import '../style/index.css';
 
@@ -86,7 +86,12 @@ function activateFileBrowser(
       | string
       | null
       | undefined;
-    gitHubBrowser.baseUrl = baseUrl || DEFAULT_GITHUB_BASE_URL;
+    const accessToken = settings.get('accessToken').composite as
+      | string
+      | null
+      | undefined;
+    drive.baseUrl = baseUrl || DEFAULT_GITHUB_BASE_URL;
+    drive.accessToken = accessToken;
   };
 
   // Fetch the initial state of the settings.

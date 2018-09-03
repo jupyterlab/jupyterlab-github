@@ -14,7 +14,6 @@ import { Contents, ServerConnection } from '@jupyterlab/services';
 import {
   browserApiRequest,
   proxiedApiRequest,
-  GITHUB_API,
   GitHubRepo,
   GitHubContents,
   GitHubBlob,
@@ -23,6 +22,9 @@ import {
 } from './github';
 
 import * as base64js from 'base64-js';
+
+export const DEFAULT_GITHUB_API_URL = 'https://api.github.com';
+export const DEFAULT_GITHUB_BASE_URL = 'https://github.com';
 
 /**
  * A Contents.IDrive implementation that serves as a read-only
@@ -40,6 +42,8 @@ export class GitHubDrive implements Contents.IDrive {
       const types = registry.getFileTypesForPath(path);
       return types.length === 0 ? registry.getFileType('text')! : types[0];
     };
+
+    this.baseUrl = DEFAULT_GITHUB_BASE_URL;
 
     // Test an api request to the notebook server
     // to see if the server proxy is installed.
@@ -103,7 +107,7 @@ export class GitHubDrive implements Contents.IDrive {
     return this._isDisposed;
   }
 
-  /**h
+  /**
    * Dispose of the resources held by the manager.
    */
   dispose(): void {
@@ -115,10 +119,31 @@ export class GitHubDrive implements Contents.IDrive {
   }
 
   /**
-   * Get the base url of the manager.
+   * The GitHub base URL
    */
-  get baseURL(): string {
-    return GITHUB_API;
+  get baseUrl(): string {
+    return this._baseUrl;
+  }
+
+  /**
+   * The GitHub base URL is set by the settingsRegistry change hook
+   */
+  set baseUrl(url: string) {
+    this._baseUrl = url;
+  }
+
+  /**
+   * The GitHub access token
+   */
+  get accessToken(): string | null | undefined {
+    return this._accessToken;
+  }
+
+  /**
+   * The GitHub access token is set by the settingsRegistry change hook
+   */
+  set accessToken(token: string | null | undefined) {
+    this._accessToken = token;
   }
 
   /**
@@ -502,11 +527,26 @@ export class GitHubDrive implements Contents.IDrive {
       if (result === true) {
         return proxiedApiRequest<T>(apiPath, this._serverSettings);
       } else {
-        return browserApiRequest<T>(apiPath);
+        let apiUrl;
+        if (this.baseUrl === DEFAULT_GITHUB_BASE_URL) {
+          apiUrl = DEFAULT_GITHUB_API_URL;
+        } else {
+          apiUrl = URLExt.join(this.baseUrl, '/api/v3');
+        }
+        let requestUrl = URLExt.join(apiUrl, apiPath);
+        if (this.accessToken) {
+          let urlParts = requestUrl.split('?');
+          let params = (urlParts[1] || '').split('&');
+          params.push('access_token=' + this.accessToken);
+          requestUrl = urlParts[0] + '?' + params.join('&');
+        }
+        return browserApiRequest<T>(requestUrl);
       }
     });
   }
 
+  private _baseUrl: string;
+  private _accessToken: string | null | undefined;
   private _validUser = false;
   private _serverSettings: ServerConnection.ISettings;
   private _useProxy: Promise<boolean>;
