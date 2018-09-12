@@ -20,9 +20,14 @@ class GitHubConfig(Configurable):
     """
     Allows configuration of access to the GitHub api
     """
-    api_url = Unicode(
-        'https://api.github.com', config=True,
-        help="The url for the GitHub api"
+    allow_client_side_access_token = Bool(
+        False, config=True,
+        help=(
+            "If True the access token specified in the JupyterLab settings "
+            "will take precedence. If False the token specified in JupyterLab "
+            "will be ignored. This may be desirable for security purposes to "
+            "encourage users to install the server extension."
+        )
     )
     access_token = Unicode(
         '', config=True,
@@ -58,7 +63,7 @@ class GitHubHandler(APIHandler):
     unauthenticated calls is so limited as to be practically useless.
     """
     @gen.coroutine
-    def get(self, path=''):
+    def get(self, path):
         """
         Proxy API requests to GitHub, adding authentication parameter(s) if
         they have been set.
@@ -67,17 +72,22 @@ class GitHubHandler(APIHandler):
         # Get access to the notebook config object
         c = GitHubConfig(config=self.config)
         try:
-            api_path = url_path_join(c.api_url, url_escape(path))
             query = self.request.query_arguments
-            params = { key: query[key][0].decode() for key in query }
+            params = {key: query[key][0].decode() for key in query}
+            api_url = params.pop('api_url', 'https://api.github.com')
+            api_path = url_path_join(api_url, url_escape(path))
             params['per_page'] = 100
-            if c.access_token != '':
-                # Preferentially use the access_token if set
-                params['access_token'] = c.access_token
-            elif c.client_id != '' and c.client_secret != '':
-                # Otherwise use client_id and client_secret if set
-                params['client_id'] = c.client_id
-                params['client_secret'] = c.client_secret
+            if not c.allow_client_side_access_token:
+                # TODO: warn somehow?
+                client_side_access_token = params.pop('access_token', None)
+            if 'access_token' not in params:
+                if c.access_token != '':
+                    # Preferentially use the access_token if set
+                    params['access_token'] = c.access_token
+                elif c.client_id != '' and c.client_secret != '':
+                    # Otherwise use client_id and client_secret if set
+                    params['client_id'] = c.client_id
+                    params['client_secret'] = c.client_secret
 
             api_path = url_concat(api_path, params)
             client = AsyncHTTPClient()
