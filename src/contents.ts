@@ -50,7 +50,8 @@ export class GitHubDrive implements Contents.IDrive {
     // If so, use that. If not, warn the user and
     // use the client-side implementation.
     this._useProxy = new Promise<boolean>(resolve => {
-      proxiedApiRequest<any>('', this._serverSettings)
+      const requestUrl = URLExt.join(this._serverSettings.baseUrl, 'github');
+      proxiedApiRequest<any>(requestUrl, this._serverSettings)
         .then(() => {
           resolve(true);
         })
@@ -130,6 +131,17 @@ export class GitHubDrive implements Contents.IDrive {
    */
   set baseUrl(url: string) {
     this._baseUrl = url;
+  }
+
+  /**
+   * The GitHub api URL
+   */
+  get apiUrl(): string {
+    if (this.baseUrl === DEFAULT_GITHUB_BASE_URL) {
+      return DEFAULT_GITHUB_API_URL;
+    } else {
+      return URLExt.join(this.baseUrl, '/api/v3');
+    }
   }
 
   /**
@@ -524,22 +536,40 @@ export class GitHubDrive implements Contents.IDrive {
    */
   private _apiRequest<T>(apiPath: string): Promise<T> {
     return this._useProxy.then(result => {
+      let parts = apiPath.split('?');
+      let path = parts[0];
+      let query = (parts[1] || '').split('&');
+      let params: { [key: string]: string } = {};
+      for (const param of query) {
+        if (param) {
+          let [key, value] = param.split('=');
+          params[key] = value;
+        }
+      }
+      if (this.accessToken) {
+        params['access_token'] = this.accessToken;
+      }
+      let baseUrl;
       if (result === true) {
-        return proxiedApiRequest<T>(apiPath, this._serverSettings);
+        baseUrl = URLExt.join(this._serverSettings.baseUrl, 'github');
+        // add the api_url as a query parameter
+        params['api_url'] = encodeURIComponent(this.apiUrl);
       } else {
-        let apiUrl;
-        if (this.baseUrl === DEFAULT_GITHUB_BASE_URL) {
-          apiUrl = DEFAULT_GITHUB_API_URL;
-        } else {
-          apiUrl = URLExt.join(this.baseUrl, '/api/v3');
-        }
-        let requestUrl = URLExt.join(apiUrl, apiPath);
-        if (this.accessToken) {
-          let urlParts = requestUrl.split('?');
-          let params = (urlParts[1] || '').split('&');
-          params.push('access_token=' + this.accessToken);
-          requestUrl = urlParts[0] + '?' + params.join('&');
-        }
+        baseUrl = this.apiUrl;
+      }
+      let requestUrl;
+      if (path) {
+        requestUrl = URLExt.join(baseUrl, path);
+      } else {
+        requestUrl = baseUrl;
+      }
+      let newQuery = Object.keys(params)
+        .map(key => `${key}=${params[key]}`)
+        .join('&');
+      requestUrl += '?' + newQuery;
+      if (result === true) {
+        return proxiedApiRequest<T>(requestUrl, this._serverSettings);
+      } else {
         return browserApiRequest<T>(requestUrl);
       }
     });
