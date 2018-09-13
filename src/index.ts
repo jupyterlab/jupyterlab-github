@@ -91,6 +91,12 @@ function activateFileBrowser(
       | null
       | undefined;
     drive.baseUrl = baseUrl || DEFAULT_GITHUB_BASE_URL;
+    if (accessToken) {
+      console.warn(
+        'Adding a client side access token can pose a security risk! ' +
+          'Please consider using the server extension instead.'
+      );
+    }
     drive.accessToken = accessToken;
   };
 
