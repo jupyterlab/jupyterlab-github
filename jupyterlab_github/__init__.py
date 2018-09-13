@@ -25,8 +25,8 @@ class GitHubConfig(Configurable):
         help=(
             "If True the access token specified in the JupyterLab settings "
             "will take precedence. If False the token specified in JupyterLab "
-            "will be ignored. This may be desirable for security purposes to "
-            "encourage users to install the server extension."
+            "will be ignored. Storing your access token in the client can "
+            "present a security risk so be careful if enabling this setting."
         )
     )
     access_token = Unicode(
