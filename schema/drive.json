@@ -12,7 +12,7 @@
     "accessToken": {
       "type": "string",
       "title": "A GitHub Personal Access Token",
-      "description": "https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/#creating-a-token",
+      "description": "WARNING: For security reasons access tokens should be set in the server extension.",
       "default": ""
     },
     "defaultRepo": {
