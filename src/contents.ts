@@ -11,6 +11,8 @@ import { ObservableValue } from '@jupyterlab/observables';
 
 import { Contents, ServerConnection } from '@jupyterlab/services';
 
+import { Dialog, showDialog } from '@jupyterlab/apputils';
+
 import {
   browserApiRequest,
   proxiedApiRequest,
@@ -558,8 +560,12 @@ export class GitHubDrive implements Contents.IDrive {
       } else {
         baseUrl = this.apiUrl;
         if (this.accessToken) {
-          // Security Alert!
-          // Client side access tokens have to be enabled in the server extension.
+          showDialog({
+            title: 'Security Alert!',
+            body:
+              'Client side access tokens have to be enabled in the server extension.',
+            buttons: [Dialog.warnButton({ label: 'OK' })]
+          });
         }
       }
       let requestUrl;
