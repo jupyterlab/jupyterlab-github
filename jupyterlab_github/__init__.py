@@ -78,7 +78,14 @@ class GitHubHandler(APIHandler):
             api_path = url_path_join(api_url, url_escape(path))
             params['per_page'] = 100
             if not c.allow_client_side_access_token:
-                # TODO: warn somehow?
+                msg = (
+                    "Client side (JupyterLab) access tokens have been disabled "
+                    "for security reasons.\nPlease remove your access token "
+                    "from JupyterLab and instead add it to your notebook "
+                    "configuration file:\n"
+                    "    c.GitHubConfig.access_token = '<TOKEN>'\n"
+                )
+                self.log.warn(msg)
                 client_side_access_token = params.pop('access_token', None)
             if 'access_token' not in params:
                 if c.access_token != '':
