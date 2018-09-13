@@ -546,16 +546,21 @@ export class GitHubDrive implements Contents.IDrive {
           params[key] = value;
         }
       }
-      if (this.accessToken) {
-        params['access_token'] = this.accessToken;
-      }
       let baseUrl;
       if (result === true) {
         baseUrl = URLExt.join(this._serverSettings.baseUrl, 'github');
         // add the api_url as a query parameter
         params['api_url'] = encodeURIComponent(this.apiUrl);
+        // add the access token if defined
+        if (this.accessToken) {
+          params['access_token'] = this.accessToken;
+        }
       } else {
         baseUrl = this.apiUrl;
+        if (this.accessToken) {
+          // Security Alert!
+          // Client side access tokens have to be enabled in the server extension.
+        }
       }
       let requestUrl;
       if (path) {
