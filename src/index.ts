@@ -7,15 +7,17 @@ import {
   JupyterLabPlugin
 } from '@jupyterlab/application';
 
+import { Dialog, showDialog } from '@jupyterlab/apputils';
+
 import { ISettingRegistry } from '@jupyterlab/coreutils';
 
 import { IDocumentManager } from '@jupyterlab/docmanager';
 
 import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
 
-import { GitHubDrive } from './contents';
+import { GitHubDrive, DEFAULT_GITHUB_BASE_URL } from './contents';
 
-import { GitHubFileBrowser, DEFAULT_GITHUB_BASE_URL } from './browser';
+import { GitHubFileBrowser } from './browser';
 
 import '../style/index.css';
 
@@ -81,12 +83,30 @@ function activateFileBrowser(
   restorer.add(gitHubBrowser, NAMESPACE);
   app.shell.addToLeftArea(gitHubBrowser, { rank: 102 });
 
-  const onSettingsUpdated = (settings: ISettingRegistry.ISettings) => {
+  let shouldWarn = false;
+  const onSettingsUpdated = async (settings: ISettingRegistry.ISettings) => {
     const baseUrl = settings.get('baseUrl').composite as
       | string
       | null
       | undefined;
-    gitHubBrowser.baseUrl = baseUrl || DEFAULT_GITHUB_BASE_URL;
+    const accessToken = settings.get('accessToken').composite as
+      | string
+      | null
+      | undefined;
+    drive.baseUrl = baseUrl || DEFAULT_GITHUB_BASE_URL;
+    if (accessToken) {
+      let proceed = true;
+      if (shouldWarn) {
+        proceed = await Private.showWarning();
+      }
+      if (!proceed) {
+        settings.remove('accessToken');
+      } else {
+        drive.accessToken = accessToken;
+      }
+    } else {
+      drive.accessToken = null;
+    }
   };
 
   // Fetch the initial state of the settings.
@@ -94,6 +114,8 @@ function activateFileBrowser(
     .then(([settings]) => {
       settings.changed.connect(onSettingsUpdated);
       onSettingsUpdated(settings);
+      // Don't warn about access token on initial page load, but do for every setting thereafter.
+      shouldWarn = true;
       const defaultRepo = settings.get('defaultRepo').composite as
         | string
         | null;
@@ -111,3 +133,33 @@ function activateFileBrowser(
 }
 
 export default fileBrowserPlugin;
+
+/**
+ * A namespace for module-private functions.
+ */
+namespace Private {
+  /**
+   * Show a warning dialog about security.
+   *
+   * @returns whether the user accepted the dialog.
+   */
+  export async function showWarning(): Promise<boolean> {
+    return showDialog({
+      title: 'Security Alert!',
+      body:
+        'Adding a client side access token can pose a security risk! ' +
+        'Please consider using the server extension instead.' +
+        'Do you want to continue?',
+      buttons: [
+        Dialog.cancelButton({ label: 'CANCEL' }),
+        Dialog.warnButton({ label: 'PROCEED' })
+      ]
+    }).then(result => {
+      if (result.button.accept) {
+        return true;
+      } else {
+        return false;
+      }
+    });
+  }
+}

@@ -7,6 +7,7 @@ test/build/*
 node_modules/
 .pytest_cache/
 .vscode/
+.idea/
 .ipynb_checkpoints/
 npm-debug.log
 package-lock.json

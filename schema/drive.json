@@ -4,15 +4,21 @@
   "title": "GitHub",
   "description": "Settings for the GitHub plugin.",
   "properties": {
-    "defaultRepo": {
-      "type": "string",
-      "title": "Default Repository",
-      "default": ""
-    },
     "baseUrl": {
       "type": "string",
       "title": "The GitHub Base URL",
       "default": "https://github.com"
+    },
+    "accessToken": {
+      "type": "string",
+      "title": "A GitHub Personal Access Token",
+      "description": "WARNING: For security reasons access tokens should be set in the server extension.",
+      "default": ""
+    },
+    "defaultRepo": {
+      "type": "string",
+      "title": "Default Repository",
+      "default": ""
     }
   },
   "type": "object"

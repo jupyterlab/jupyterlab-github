@@ -20,6 +20,15 @@ class GitHubConfig(Configurable):
     """
     Allows configuration of access to the GitHub api
     """
+    allow_client_side_access_token = Bool(
+        False, config=True,
+        help=(
+            "If True the access token specified in the JupyterLab settings "
+            "will take precedence. If False the token specified in JupyterLab "
+            "will be ignored. Storing your access token in the client can "
+            "present a security risk so be careful if enabling this setting."
+        )
+    )
     api_url = Unicode(
         'https://api.github.com', config=True,
         help="The url for the GitHub api"
@@ -58,7 +67,7 @@ class GitHubHandler(APIHandler):
     unauthenticated calls is so limited as to be practically useless.
     """
     @gen.coroutine
-    def get(self, path=''):
+    def get(self, path):
         """
         Proxy API requests to GitHub, adding authentication parameter(s) if
         they have been set.
@@ -67,11 +76,24 @@ class GitHubHandler(APIHandler):
         # Get access to the notebook config object
         c = GitHubConfig(config=self.config)
         try:
-            api_path = url_path_join(c.api_url, url_escape(path))
             query = self.request.query_arguments
-            params = { key: query[key][0].decode() for key in query }
+            params = {key: query[key][0].decode() for key in query}
+            api_path = url_path_join(c.api_url, url_escape(path))
             params['per_page'] = 100
-            if c.access_token != '':
+
+            access_token = params.pop('access_token', None)
+            if access_token and c.allow_client_side_access_token == True:
+                params['access_token'] = access_token
+            elif access_token and c.allow_client_side_access_token == False:
+                msg = (
+                    "Client side (JupyterLab) access tokens have been "
+                    "disabled for security reasons.\nPlease remove your "
+                    "access token from JupyterLab and instead add it to "
+                    "your notebook configuration file:\n"
+                    "c.GitHubConfig.access_token = '<TOKEN>'\n"
+                )
+                raise HTTPError(403, msg)
+            elif c.access_token != '':
                 # Preferentially use the access_token if set
                 params['access_token'] = c.access_token
             elif c.client_id != '' and c.client_secret != '':

@@ -1,11 +1,7 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import { URLExt } from '@jupyterlab/coreutils';
-
 import { ServerConnection } from '@jupyterlab/services';
-
-export const GITHUB_API = 'https://api.github.com';
 
 /**
  * Make a client-side request to the GitHub API.
@@ -16,8 +12,7 @@ export const GITHUB_API = 'https://api.github.com';
  * @returns a Promise resolved with the JSON response.
  */
 export function browserApiRequest<T>(url: string): Promise<T> {
-  const requestUrl = URLExt.join(GITHUB_API, url);
-  return window.fetch(requestUrl).then(response => {
+  return window.fetch(url).then(response => {
     if (response.status !== 200) {
       return response.json().then(data => {
         throw new ServerConnection.ResponseError(response, data.message);
@@ -42,13 +37,7 @@ export function proxiedApiRequest<T>(
   url: string,
   settings: ServerConnection.ISettings
 ): Promise<T> {
-  // Safari can have problems with spurious redirects when there is a trailing
-  // slash before the query string, so don't add an empty part of the url.
-  const fullURL = url
-    ? URLExt.join(settings.baseUrl, 'github', url)
-    : URLExt.join(settings.baseUrl, 'github');
-
-  return ServerConnection.makeRequest(fullURL, {}, settings).then(response => {
+  return ServerConnection.makeRequest(url, {}, settings).then(response => {
     if (response.status !== 200) {
       return response.json().then(data => {
         throw new ServerConnection.ResponseError(response, data.message);

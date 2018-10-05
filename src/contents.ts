@@ -14,7 +14,6 @@ import { Contents, ServerConnection } from '@jupyterlab/services';
 import {
   browserApiRequest,
   proxiedApiRequest,
-  GITHUB_API,
   GitHubRepo,
   GitHubContents,
   GitHubBlob,
@@ -23,6 +22,9 @@ import {
 } from './github';
 
 import * as base64js from 'base64-js';
+
+export const DEFAULT_GITHUB_API_URL = 'https://api.github.com';
+export const DEFAULT_GITHUB_BASE_URL = 'https://github.com';
 
 /**
  * A Contents.IDrive implementation that serves as a read-only
@@ -41,12 +43,15 @@ export class GitHubDrive implements Contents.IDrive {
       return types.length === 0 ? registry.getFileType('text')! : types[0];
     };
 
+    this.baseUrl = DEFAULT_GITHUB_BASE_URL;
+
     // Test an api request to the notebook server
     // to see if the server proxy is installed.
     // If so, use that. If not, warn the user and
     // use the client-side implementation.
     this._useProxy = new Promise<boolean>(resolve => {
-      proxiedApiRequest<any>('', this._serverSettings)
+      const requestUrl = URLExt.join(this._serverSettings.baseUrl, 'github');
+      proxiedApiRequest<any>(requestUrl, this._serverSettings)
         .then(() => {
           resolve(true);
         })
@@ -103,7 +108,7 @@ export class GitHubDrive implements Contents.IDrive {
     return this._isDisposed;
   }
 
-  /**h
+  /**
    * Dispose of the resources held by the manager.
    */
   dispose(): void {
@@ -115,10 +120,31 @@ export class GitHubDrive implements Contents.IDrive {
   }
 
   /**
-   * Get the base url of the manager.
+   * The GitHub base URL
    */
-  get baseURL(): string {
-    return GITHUB_API;
+  get baseUrl(): string {
+    return this._baseUrl;
+  }
+
+  /**
+   * The GitHub base URL is set by the settingsRegistry change hook
+   */
+  set baseUrl(url: string) {
+    this._baseUrl = url;
+  }
+
+  /**
+   * The GitHub access token
+   */
+  get accessToken(): string | null | undefined {
+    return this._accessToken;
+  }
+
+  /**
+   * The GitHub access token is set by the settingsRegistry change hook
+   */
+  set accessToken(token: string | null | undefined) {
+    this._accessToken = token;
   }
 
   /**
@@ -484,6 +510,7 @@ export class GitHubDrive implements Contents.IDrive {
             this.rateLimitedState.set(true);
           }
         } else {
+          console.error(err.message);
           console.warn(
             'GitHub: cannot find user. ' + 'Perhaps you misspelled something?'
           );
@@ -499,14 +526,43 @@ export class GitHubDrive implements Contents.IDrive {
    */
   private _apiRequest<T>(apiPath: string): Promise<T> {
     return this._useProxy.then(result => {
+      let parts = apiPath.split('?');
+      let path = parts[0];
+      let query = (parts[1] || '').split('&');
+      let params: { [key: string]: string } = {};
+      for (const param of query) {
+        if (param) {
+          let [key, value] = param.split('=');
+          params[key] = value;
+        }
+      }
+      let requestUrl: string;
       if (result === true) {
-        return proxiedApiRequest<T>(apiPath, this._serverSettings);
+        requestUrl = URLExt.join(this._serverSettings.baseUrl, 'github');
+        // add the access token if defined
+        if (this.accessToken) {
+          params['access_token'] = this.accessToken;
+        }
       } else {
-        return browserApiRequest<T>(apiPath);
+        requestUrl = DEFAULT_GITHUB_API_URL;
+      }
+      if (path) {
+        requestUrl = URLExt.join(requestUrl, path);
+      }
+      let newQuery = Object.keys(params)
+        .map(key => `${key}=${params[key]}`)
+        .join('&');
+      requestUrl += '?' + newQuery;
+      if (result === true) {
+        return proxiedApiRequest<T>(requestUrl, this._serverSettings);
+      } else {
+        return browserApiRequest<T>(requestUrl);
       }
     });
   }
 
+  private _baseUrl: string;
+  private _accessToken: string | null | undefined;
   private _validUser = false;
   private _serverSettings: ServerConnection.ISettings;
   private _useProxy: Promise<boolean>;
