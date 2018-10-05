@@ -136,17 +136,6 @@ export class GitHubDrive implements Contents.IDrive {
   }
 
   /**
-   * The GitHub api URL
-   */
-  get apiUrl(): string {
-    if (this.baseUrl === DEFAULT_GITHUB_BASE_URL) {
-      return DEFAULT_GITHUB_API_URL;
-    } else {
-      return URLExt.join(this.baseUrl, '/api/v3');
-    }
-  }
-
-  /**
    * The GitHub access token
    */
   get accessToken(): string | null | undefined {
@@ -548,17 +537,15 @@ export class GitHubDrive implements Contents.IDrive {
           params[key] = value;
         }
       }
-      let baseUrl;
+      let requestUrl: string;
       if (result === true) {
-        baseUrl = URLExt.join(this._serverSettings.baseUrl, 'github');
-        // add the api_url as a query parameter
-        params['api_url'] = encodeURIComponent(this.apiUrl);
+        requestUrl = URLExt.join(this._serverSettings.baseUrl, 'github');
         // add the access token if defined
         if (this.accessToken) {
           params['access_token'] = this.accessToken;
         }
       } else {
-        baseUrl = this.apiUrl;
+        requestUrl = DEFAULT_GITHUB_API_URL;
         if (this.accessToken) {
           showDialog({
             title: 'Security Alert!',
@@ -568,11 +555,8 @@ export class GitHubDrive implements Contents.IDrive {
           });
         }
       }
-      let requestUrl;
       if (path) {
-        requestUrl = URLExt.join(baseUrl, path);
-      } else {
-        requestUrl = baseUrl;
+        requestUrl = URLExt.join(requestUrl, path);
       }
       let newQuery = Object.keys(params)
         .map(key => `${key}=${params[key]}`)

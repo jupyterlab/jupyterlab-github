@@ -29,6 +29,10 @@ class GitHubConfig(Configurable):
             "present a security risk so be careful if enabling this setting."
         )
     )
+    api_url = Unicode(
+        'https://api.github.com', config=True,
+        help="The url for the GitHub api"
+    )
     access_token = Unicode(
         '', config=True,
         help=(
@@ -74,8 +78,7 @@ class GitHubHandler(APIHandler):
         try:
             query = self.request.query_arguments
             params = {key: query[key][0].decode() for key in query}
-            api_url = params.pop('api_url', 'https://api.github.com')
-            api_path = url_path_join(api_url, url_escape(path))
+            api_path = url_path_join(c.api_url, url_escape(path))
             params['per_page'] = 100
             if not c.allow_client_side_access_token:
                 client_side_access_token = params.pop('access_token', None)
