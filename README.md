@@ -37,7 +37,7 @@ This process is described in the [installation](#Installation) section.
 
 ## Prerequisites
 
-- JupyterLab 0.33
+- JupyterLab 0.35
 - A GitHub account for the serverextension
 
 ## Installation
