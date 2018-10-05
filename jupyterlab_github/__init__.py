@@ -80,25 +80,26 @@ class GitHubHandler(APIHandler):
             params = {key: query[key][0].decode() for key in query}
             api_path = url_path_join(c.api_url, url_escape(path))
             params['per_page'] = 100
-            if not c.allow_client_side_access_token:
-                client_side_access_token = params.pop('access_token', None)
-                if client_side_access_token is None:
-                    msg = (
-                        "Client side (JupyterLab) access tokens have been "
-                        "disabled for security reasons.\nPlease remove your "
-                        "access token from JupyterLab and instead add it to "
-                        "your notebook configuration file:\n"
-                        "c.GitHubConfig.access_token = '<TOKEN>'\n"
-                    )
-                    self.log.warn(msg)
-            if 'access_token' not in params:
-                if c.access_token != '':
-                    # Preferentially use the access_token if set
-                    params['access_token'] = c.access_token
-                elif c.client_id != '' and c.client_secret != '':
-                    # Otherwise use client_id and client_secret if set
-                    params['client_id'] = c.client_id
-                    params['client_secret'] = c.client_secret
+
+            access_token = params.pop('access_token', None)
+            if access_token and c.allow_client_side_access_token == True:
+                params['access_token'] = access_token
+            elif access_token and c.allow_client_side_access_token == False:
+                msg = (
+                    "Client side (JupyterLab) access tokens have been "
+                    "disabled for security reasons.\nPlease remove your "
+                    "access token from JupyterLab and instead add it to "
+                    "your notebook configuration file:\n"
+                    "c.GitHubConfig.access_token = '<TOKEN>'\n"
+                )
+                raise HTTPError(403, msg)
+            elif c.access_token != '':
+                # Preferentially use the access_token if set
+                params['access_token'] = c.access_token
+            elif c.client_id != '' and c.client_secret != '':
+                # Otherwise use client_id and client_secret if set
+                params['client_id'] = c.client_id
+                params['client_secret'] = c.client_secret
 
             api_path = url_concat(api_path, params)
             client = AsyncHTTPClient()
