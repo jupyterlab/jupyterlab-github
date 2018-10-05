@@ -11,8 +11,6 @@ import { ObservableValue } from '@jupyterlab/observables';
 
 import { Contents, ServerConnection } from '@jupyterlab/services';
 
-import { Dialog, showDialog } from '@jupyterlab/apputils';
-
 import {
   browserApiRequest,
   proxiedApiRequest,
@@ -512,6 +510,7 @@ export class GitHubDrive implements Contents.IDrive {
             this.rateLimitedState.set(true);
           }
         } else {
+          console.error(err.message);
           console.warn(
             'GitHub: cannot find user. ' + 'Perhaps you misspelled something?'
           );
@@ -546,14 +545,6 @@ export class GitHubDrive implements Contents.IDrive {
         }
       } else {
         requestUrl = DEFAULT_GITHUB_API_URL;
-        if (this.accessToken) {
-          showDialog({
-            title: 'Security Alert!',
-            body:
-              'Client side access tokens have to be enabled in the server extension.',
-            buttons: [Dialog.warnButton({ label: 'OK' })]
-          });
-        }
       }
       if (path) {
         requestUrl = URLExt.join(requestUrl, path);
