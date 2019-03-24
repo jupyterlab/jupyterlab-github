@@ -116,8 +116,7 @@ jupyter serverextension enable --sys-prefix jupyterlab_github
 
 You now need to add the credentials you got from GitHub
 to your notebook configuration file. Instructions for generating a configuration
-file can be found [here](http://jupyter-notebook.readthedocs.io/en/stable/config_overview.html#configure-nbserver)
-Once you have identified this file, add the following lines to it:
+file can be found [here](http://jupyter-notebook.readthedocs.io/en/stable/config_overview.html#configure-nbserver).
 Once you have identified this file, add the following lines to it:
 
 ```python
