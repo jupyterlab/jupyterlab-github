@@ -1,6 +1,6 @@
 {
   "name": "@jupyterlab/github",
-  "version": "1.0.0-pre",
+  "version": "1.0.0-pre.1",
   "description": "JupyterLab viewer for GitHub repositories",
   "keywords": [
     "github",
@@ -41,13 +41,13 @@
     "watch": "tsc -w"
   },
   "dependencies": {
-    "@jupyterlab/application": "^1.0.0-alpha.6",
-    "@jupyterlab/apputils": "^1.0.0-alpha.6",
-    "@jupyterlab/coreutils": "3.0.0-alpha.6",
-    "@jupyterlab/docmanager": "^1.0.0-alpha.6",
-    "@jupyterlab/docregistry": "^1.0.0-alpha.6",
-    "@jupyterlab/filebrowser": "^1.0.0-alpha.6",
-    "@jupyterlab/services": "^4.0.0-alpha.6",
+    "@jupyterlab/application": "^1.0.0-alpha.8",
+    "@jupyterlab/apputils": "^1.0.0-alpha.8",
+    "@jupyterlab/coreutils": "3.0.0-alpha.8",
+    "@jupyterlab/docmanager": "^1.0.0-alpha.8",
+    "@jupyterlab/docregistry": "^1.0.0-alpha.8",
+    "@jupyterlab/filebrowser": "^1.0.0-alpha.8",
+    "@jupyterlab/services": "^4.0.0-alpha.8",
     "@phosphor/algorithm": "^1.1.2",
     "@phosphor/messaging": "^1.2.2",
     "@phosphor/signaling": "^1.2.2",
