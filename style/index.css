@@ -3,11 +3,11 @@
 | Distributed under the terms of the Modified BSD License.
 |----------------------------------------------------------------------------*/
 
-[data-theme-light='true'] .jp-GitHub-icon {
+[data-jp-theme-light='true'] .jp-GitHub-icon {
   background-image: url(octocat-light.svg);
 }
 
-[data-theme-light='false'] .jp-GitHub-icon {
+[data-jp-theme-light='false'] .jp-GitHub-icon {
   background-image: url(octocat-dark.svg);
 }
 
