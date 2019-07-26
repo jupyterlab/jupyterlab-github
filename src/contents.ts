@@ -742,7 +742,7 @@ namespace Private {
     let content: Contents.IModel[] = repos.map(repo => {
       return {
         name: repo.name,
-        path: repo.name,
+        path: repo.full_name,
         format: 'json',
         type: 'directory',
         created: '',
