@@ -7,13 +7,15 @@ import { URLExt } from '@jupyterlab/coreutils';
 
 import { FileBrowser } from '@jupyterlab/filebrowser';
 
-import { find } from '@phosphor/algorithm';
+import { refreshIcon } from '@jupyterlab/ui-components';
 
-import { Message } from '@phosphor/messaging';
+import { find } from '@lumino/algorithm';
 
-import { ISignal, Signal } from '@phosphor/signaling';
+import { Message } from '@lumino/messaging';
 
-import { PanelLayout, Widget } from '@phosphor/widgets';
+import { ISignal, Signal } from '@lumino/signaling';
+
+import { PanelLayout, Widget } from '@lumino/widgets';
 
 import { GitHubDrive, parsePath } from './contents';
 
@@ -43,10 +45,7 @@ export class GitHubFileBrowser extends Widget {
     this.userName = new GitHubUserInput();
     this.userName.node.title = 'Click to edit user/organization';
     this._browser.toolbar.addItem('user', this.userName);
-    this.userName.nameChanged.connect(
-      this._onUserChanged,
-      this
-    );
+    this.userName.nameChanged.connect(this._onUserChanged, this);
     // Create a button that opens GitHub at the appropriate
     // repo+directory.
     this._openGitHubButton = new ToolbarButton({
@@ -73,7 +72,7 @@ export class GitHubFileBrowser extends Widget {
         }
         window.open(url);
       },
-      iconClassName: 'jp-GitHub-icon jp-Icon jp-Icon-16',
+      iconClass: 'jp-GitHub-icon jp-Icon jp-Icon-16',
       tooltip: 'Open this repository on GitHub'
     });
     this._openGitHubButton.addClass('jp-GitHub-toolbar-item');
@@ -101,7 +100,7 @@ export class GitHubFileBrowser extends Widget {
         window.open(url + `?urlpath=${tree}`);
       },
       tooltip: 'Launch this repository on mybinder.org',
-      iconClassName: 'jp-MyBinderButton jp-Icon jp-Icon-16'
+      iconClass: 'jp-MyBinderButton jp-Icon jp-Icon-16'
     });
     this._launchBinderButton.addClass('jp-GitHub-toolbar-item');
     this._browser.toolbar.addItem('binder', this._launchBinderButton);
@@ -109,7 +108,7 @@ export class GitHubFileBrowser extends Widget {
     // Add our own refresh button, since the other one is hidden
     // via CSS.
     let refresher = new ToolbarButton({
-      iconClassName: 'jp-RefreshIcon jp-Icon jp-Icon-16',
+      icon: refreshIcon,
       onClick: () => {
         this._browser.model.refresh();
       },
@@ -119,17 +118,11 @@ export class GitHubFileBrowser extends Widget {
     this._browser.toolbar.addItem('gh-refresher', refresher);
 
     // Set up a listener to check if we can launch mybinder.
-    this._browser.model.pathChanged.connect(
-      this._onPathChanged,
-      this
-    );
+    this._browser.model.pathChanged.connect(this._onPathChanged, this);
     // Trigger an initial pathChanged to check for binder state.
     this._onPathChanged();
 
-    this._drive.rateLimitedState.changed.connect(
-      this._updateErrorPanel,
-      this
-    );
+    this._drive.rateLimitedState.changed.connect(this._updateErrorPanel, this);
   }
 
   /**

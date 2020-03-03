@@ -9,11 +9,11 @@ import {
 
 import { Dialog, showDialog } from '@jupyterlab/apputils';
 
-import { ISettingRegistry } from '@jupyterlab/coreutils';
-
 import { IDocumentManager } from '@jupyterlab/docmanager';
 
 import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
+
+import { ISettingRegistry } from '@jupyterlab/settingregistry';
 
 import { GitHubDrive, DEFAULT_GITHUB_BASE_URL } from './contents';
 
