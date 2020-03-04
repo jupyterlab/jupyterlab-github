@@ -1,7 +1,7 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import { Signal, ISignal } from '@phosphor/signaling';
+import { Signal, ISignal } from '@lumino/signaling';
 
 import { PathExt, URLExt } from '@jupyterlab/coreutils';
 

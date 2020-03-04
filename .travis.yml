@@ -1,16 +1,17 @@
 language: node_js
 node_js:
-- '5'
+- '12'
 sudo: false
 notifications:
   email: false
 before_install:
-  - cd ..
-  - git clone --depth=50 --branch=master https://github.com/jupyterlab/jupyterlab.git
-  - cd jupyterlab
+  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh;
+  - bash ~/miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - pip install jupyterlab
 install:
-  - npm install --no-optional
-  - npm run addsibling $TRAVIS_BUILD_DIR
-  - npm run build
+  - jlpm install
+  - jlpm build
+  - jupyter labextension install .
 script:
   - echo "Build successful"

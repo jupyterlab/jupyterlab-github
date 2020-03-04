@@ -10,7 +10,7 @@ from traitlets.config import Configurable
 from notebook.utils import url_path_join, url_escape
 from notebook.base.handlers import APIHandler
 
-__version__ = '1.0.0'
+__version__ = '2.0.0'
 
 
 link_regex = re.compile(r'<([^>]*)>;\s*rel="([\w]*)\"')
@@ -72,7 +72,7 @@ class GitHubHandler(APIHandler):
 
             access_token = params.pop('access_token', None)
             if access_token and c.allow_client_side_access_token == True:
-                params['access_token'] = access_token
+                token = access_token
             elif access_token and c.allow_client_side_access_token == False:
                 msg = (
                     "Client side (JupyterLab) access tokens have been "
@@ -83,14 +83,16 @@ class GitHubHandler(APIHandler):
                 )
                 raise HTTPError(403, msg)
             elif c.access_token != '':
-                # Preferentially use the access_token if set
-                params['access_token'] = c.access_token
+                # Preferentially use the config access_token if set
+                token = c.access_token
 
             api_path = url_concat(api_path, params)
             client = AsyncHTTPClient()
             request = HTTPRequest(
-                api_path, validate_cert=c.validate_cert,
-                user_agent='JupyterLab GitHub'
+                api_path,
+                validate_cert=c.validate_cert,
+                user_agent='JupyterLab GitHub',
+                headers={"Authorization": "token {}".format(token)}
             )
             response = yield client.fetch(request)
             data = json.loads(response.body.decode('utf-8'))
