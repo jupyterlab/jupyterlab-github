@@ -50,7 +50,10 @@ export class GitHubDrive implements Contents.IDrive {
     // If so, use that. If not, warn the user and
     // use the client-side implementation.
     this._useProxy = new Promise<boolean>(resolve => {
-      const requestUrl = URLExt.join(this._serverSettings.baseUrl, 'github');
+      let requestUrl = URLExt.join(this._serverSettings.baseUrl, 'github');
+	    if (this.accessToken) {
+	      requestUrl += '?access_token=' + this.accessToken;
+	    }
       proxiedApiRequest<any>(requestUrl, this._serverSettings)
         .then(() => {
           resolve(true);
