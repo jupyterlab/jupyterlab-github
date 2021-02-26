@@ -3,6 +3,8 @@
 | Distributed under the terms of the Modified BSD License.
 |----------------------------------------------------------------------------*/
 
+@import url('base.css');
+
 [data-jp-theme-light='true'] .jp-GitHub-icon {
   background-image: url(octocat-light.svg);
 }
