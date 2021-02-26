@@ -257,7 +257,7 @@ export class GitHubFileBrowser extends Widget {
 
   private _browser: FileBrowser;
   private _drive: GitHubDrive;
-  private _errorPanel: GitHubErrorPanel | null;
+  private _errorPanel: GitHubErrorPanel | null = null;
   private _openGitHubButton: ToolbarButton;
   private _launchBinderButton: ToolbarButton;
   private _binderActive = false;

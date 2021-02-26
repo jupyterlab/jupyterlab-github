@@ -51,7 +51,7 @@ export function proxiedApiRequest<T>(
  * Typings representing contents from the GitHub API v3.
  * Cf: https://developer.github.com/v3/repos/contents/
  */
-export class GitHubContents {
+export interface GitHubContents {
   /**
    * The type of the file.
    */
@@ -116,7 +116,7 @@ export class GitHubContents {
  * Typings representing file contents from the GitHub API v3.
  * Cf: https://developer.github.com/v3/repos/contents/#response-if-content-is-a-file
  */
-export class GitHubFileContents extends GitHubContents {
+export interface GitHubFileContents extends GitHubContents {
   /**
    * The type of the contents.
    */
@@ -136,7 +136,7 @@ export class GitHubFileContents extends GitHubContents {
 /**
  * Typings representing a directory from the GitHub API v3.
  */
-export class GitHubDirectoryContents extends GitHubContents {
+export interface GitHubDirectoryContents extends GitHubContents {
   /**
    * The type of the contents.
    */
@@ -147,7 +147,7 @@ export class GitHubDirectoryContents extends GitHubContents {
  * Typings representing a blob from the GitHub API v3.
  * Cf: https://developer.github.com/v3/git/blobs/#response
  */
-export class GitHubBlob {
+export interface GitHubBlob {
   /**
    * The base64-encoded contents of the file.
    */
@@ -178,7 +178,7 @@ export class GitHubBlob {
  * Typings representing symlink contents from the GitHub API v3.
  * Cf: https://developer.github.com/v3/repos/contents/#response-if-content-is-a-symlink
  */
-export class GitHubSymlinkContents extends GitHubContents {
+export interface GitHubSymlinkContents extends GitHubContents {
   /**
    * The type of the contents.
    */
@@ -189,7 +189,7 @@ export class GitHubSymlinkContents extends GitHubContents {
  * Typings representing submodule contents from the GitHub API v3.
  * Cf: https://developer.github.com/v3/repos/contents/#response-if-content-is-a-submodule
  */
-export class GitHubSubmoduleContents extends GitHubContents {
+export interface GitHubSubmoduleContents extends GitHubContents {
   /**
    * The type of the contents.
    */
@@ -209,7 +209,7 @@ export type GitHubDirectoryListing = GitHubContents[];
  * #### Notes
  *   This is incomplete.
  */
-export class GitHubRepo {
+export interface GitHubRepo {
   /**
    * ID for the repository.
    */

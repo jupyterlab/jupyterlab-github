@@ -87,7 +87,9 @@ export class GitHubDrive implements Contents.IDrive {
   /**
    * Settings for the notebook server.
    */
-  readonly serverSettings: ServerConnection.ISettings;
+  get serverSettings(): ServerConnection.ISettings {
+    return this._serverSettings;
+  }
 
   /**
    * State for whether the drive is being rate limited by GitHub.
@@ -561,7 +563,7 @@ export class GitHubDrive implements Contents.IDrive {
     });
   }
 
-  private _baseUrl: string;
+  private _baseUrl: string = 'github';
   private _accessToken: string | null | undefined;
   private _validUser = false;
   private _serverSettings: ServerConnection.ISettings;
