@@ -1,55 +1,100 @@
 """
-Setup module for the jupyterlab_github proxy extension
+jupyterlab_github setup
 """
-import setuptools
-from setupbase import (
-    create_cmdclass, ensure_python, find_packages
-    )
+import json
+from pathlib import Path
 
-data_files_spec = [
-    ('etc/jupyter/jupyter_notebook_config.d',
-     'jupyter-config/jupyter_notebook_config.d', 'jupyterlab_github.json'),
+from jupyter_packaging import (
+    create_cmdclass,
+    install_npm,
+    ensure_targets,
+    combine_commands,
+    skip_if_exists
+)
+import setuptools
+
+HERE = Path(__file__).parent.resolve()
+
+# The name of the project
+name = "jupyterlab_github"
+
+lab_path = (HERE / name / "labextension")
+
+# Representative files that should exist after a successful build
+jstargets = [
+    str(lab_path / "package.json"),
 ]
 
-cmdclass = create_cmdclass(data_files_spec=data_files_spec)
+package_data_spec = {
+    name: ["*"],
+}
 
-setup_dict = dict(
-    name='jupyterlab_github',
-    description='A Jupyter Notebook server extension which acts a proxy for the GitHub API.',
-    packages=find_packages(),
+labext_name = "@jupyterlab/github"
+
+data_files_spec = [
+    ("share/jupyter/labextensions/%s" % labext_name, str(lab_path), "**"),
+    ("share/jupyter/labextensions/%s" % labext_name, str(HERE), "install.json"),("etc/jupyter/jupyter_server_config.d",
+     "jupyter-config", "jupyterlab_github.json"),
+    
+]
+
+cmdclass = create_cmdclass("jsdeps",
+    package_data_spec=package_data_spec,
+    data_files_spec=data_files_spec
+)
+
+js_command = combine_commands(
+    install_npm(HERE, build_cmd="build:prod", npm=["jlpm"]),
+    ensure_targets(jstargets),
+)
+
+is_repo = (HERE / ".git").exists()
+if is_repo:
+    cmdclass["jsdeps"] = js_command
+else:
+    cmdclass["jsdeps"] = skip_if_exists(jstargets, js_command)
+
+long_description = (HERE / "README.md").read_text()
+
+# Get the package info from package.json
+pkg_json = json.loads((HERE / "package.json").read_bytes())
+
+setup_args = dict(
+    name=name,
+    version=pkg_json["version"],
+    url=pkg_json["homepage"],
+    author=pkg_json["author"]["name"],
+    author_email=pkg_json["author"]["email"],
+    description=pkg_json["description"],
+    license=pkg_json["license"],
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     cmdclass=cmdclass,
-    author          = 'Jupyter Development Team',
-    author_email    = 'jupyter@googlegroups.com',
-    url             = 'http://jupyter.org',
-    license         = 'BSD',
-    platforms       = "Linux, Mac OS X, Windows",
-    keywords        = ['Jupyter', 'JupyterLab', 'GitHub'],
-    python_requires = '>=3.5',
-    classifiers     = [
-        'Intended Audience :: Developers',
-        'Intended Audience :: System Administrators',
-        'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: BSD License',
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 3',
-    ],
+    packages=setuptools.find_packages(),
     install_requires=[
-        'notebook'
-    ]
+        "jupyterlab~=3.0",
+    ],
+    zip_safe=False,
+    include_package_data=True,
+    python_requires=">=3.6",
+    platforms="Linux, Mac OS X, Windows",
+    keywords=["Jupyter", "JupyterLab", "JupyterLab3"],
+    classifiers=[
+        "License :: OSI Approved :: BSD License",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Framework :: Jupyter",
+        "Framework :: Jupyter :: JupyterLab",
+        "Framework :: Jupyter :: JupyterLab :: 3",
+        "Framework :: Jupyter :: JupyterLab :: Extensions",
+        "Framework :: Jupyter :: JupyterLab :: Extensions :: Prebuilt",
+    ],
 )
 
-try:
-    ensure_python(setup_dict["python_requires"].split(','))
-except ValueError as e:
-    raise  ValueError("{:s}, to use {} you must use python {} ".format(
-                          e,
-                          setup_dict["name"],
-                          setup_dict["python_requires"])
-                     )
 
-from jupyterlab_github import __version__
-
-setuptools.setup(
-    version=__version__,
-    **setup_dict
-)
+if __name__ == "__main__":
+    setuptools.setup(**setup_args)
