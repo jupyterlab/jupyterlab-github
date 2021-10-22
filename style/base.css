@@ -1,0 +1,123 @@
+/*-----------------------------------------------------------------------------
+| Copyright (c) Jupyter Development Team.
+| Distributed under the terms of the Modified BSD License.
+|----------------------------------------------------------------------------*/
+
+[data-jp-theme-light='true'] .jp-GitHub-icon {
+  background-image: url(octocat-light.svg);
+}
+
+[data-jp-theme-light='false'] .jp-GitHub-icon {
+  background-image: url(octocat-dark.svg);
+}
+
+.jp-GitHubBrowser {
+  background-color: var(--jp-layout-color1);
+  height: 100%;
+}
+
+.jp-GitHubBrowser .jp-FileBrowser {
+  flex-grow: 1;
+  height: 100%;
+}
+
+.jp-GitHubUserInput {
+  overflow: hidden;
+  white-space: nowrap;
+  text-align: center;
+  font-size: large;
+  padding: 0px;
+  background-color: var(--jp-layout-color1);
+}
+
+.jp-FileBrowser-toolbar.jp-Toolbar .jp-Toolbar-item.jp-GitHubUserInput {
+  flex: 8 8;
+}
+
+.jp-GitHubUserInput-wrapper {
+  background-color: var(--jp-input-active-background);
+  border: var(--jp-border-width) solid var(--jp-border-color2);
+  height: 30px;
+  padding: 0 0 0 12px;
+  margin: 0 4px 0 0;
+}
+
+.jp-GitHubUserInput-wrapper:focus-within {
+  border: var(--jp-border-width) solid var(--md-blue-500);
+  box-shadow: inset 0 0 4px var(--md-blue-300);
+}
+
+.jp-GitHubUserInput-wrapper input {
+  background: transparent;
+  float: left;
+  border: none;
+  outline: none;
+  font-size: var(--jp-ui-font-size3);
+  color: var(--jp-ui-font-color0);
+  width: calc(100% - 18px);
+  line-height: 28px;
+}
+
+.jp-GitHubUserInput-wrapper input::placeholder {
+  color: var(--jp-ui-font-color3);
+  font-size: var(--jp-ui-font-size1);
+  text-transform: uppercase;
+}
+
+.jp-GitHubBrowser .jp-ToolbarButton.jp-Toolbar-item.jp-GitHub-toolbar-item {
+  display: block;
+}
+
+.jp-GitHubBrowser .jp-ToolbarButton.jp-Toolbar-item {
+  display: none;
+}
+
+.jp-GitHubBrowser .jp-DirListing-headerItem.jp-id-modified {
+  display: none;
+}
+
+.jp-GitHubBrowser .jp-DirListing-itemModified {
+  display: none;
+}
+
+.jp-GitHubErrorPanel {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--jp-layout-color2);
+}
+
+.jp-GitHubErrorImage {
+  background-size: 100%;
+  width: 200px;
+  height: 165px;
+  background-image: url(octocat_error.png);
+}
+
+.jp-GitHubErrorText {
+  font-size: var(--jp-ui-font-size3);
+  color: var(--jp-ui-font-color1);
+  text-align: center;
+  padding: 12px;
+}
+
+.jp-GitHubBrowser .jp-MyBinderButton {
+  background-image: url(binder.svg);
+}
+
+.jp-GitHubBrowser .jp-MyBinderButton-disabled {
+  opacity: 0.3;
+}
+
+#setting-editor .jp-PluginList-icon.jp-GitHub-icon {
+  background-size: 85%;
+  background-repeat: no-repeat;
+  background-position: center;
+}

@@ -19,8 +19,6 @@ import { GitHubDrive, DEFAULT_GITHUB_BASE_URL } from './contents';
 
 import { GitHubFileBrowser } from './browser';
 
-import '../style/index.css';
-
 /**
  * GitHub filebrowser plugin state namespace.
  */
