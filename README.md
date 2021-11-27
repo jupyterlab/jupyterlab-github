@@ -12,7 +12,7 @@ any other notebook. You can also attach a kernel to text files and run those.
 Basically, you should be able to open any file in a repository that JupyterLab can handle.
 
 Here is a screenshot of the plugin opening this very file on GitHub:
-![gitception](gitception.png 'Gitception')
+![gitception](https://raw.githubusercontent.com/jupyterlab/jupyterlab-github/master/gitception.png 'Gitception')
 
 ### What this extension is not
 
@@ -23,9 +23,9 @@ which represents a huge increase in complexity for the extension.
 
 ### A note on rate-limiting
 
-This extension has both a client-side component (that is, Javascript that is bundled
+This extension has both a client-side component (that is, JavaScript that is bundled
 with JupyterLab), and a server-side component (that is, Python code that is added
-to the Jupyter notebook server). This extension _will_ work with out the server extension,
+to the Jupyter server). This extension _will_ work with out the server extension,
 with a major caveat: when making unauthenticated requests to GitHub
 (as we must do to get repository data), GitHub imposes fairly strict rate-limits
 on how many requests we can make. As such, you are likely to hit that limit
@@ -37,26 +37,32 @@ This process is described in the [installation](#Installation) section.
 
 ## Prerequisites
 
-- JupyterLab 1.0
-- A GitHub account for the serverextension
+- JupyterLab 3.0
+- A GitHub account for the server extension
 
 ## Installation
 
-As discussed above, this extension has both a serverextension and a labextension.
-We recommend installing both so as to not be rate-limited.
-The purpose of the serverextension is to add GitHub credentials that you will need to acquire
+As discussed above, this extension has both a server extension and a lab extension.
+Both extensions will be installed by default when installing from PyPI, but you may
+have only lab extension installed if you used the Extension Manager in JupyterLab 3.x.
+
+We recommend completing the steps described below as to not be rate-limited.
+The purpose of the server extension is to add GitHub credentials that you will need to acquire
 from https://github.com/settings/developers, and then to proxy your request to GitHub.
 
-### 1. Installing the labextension
+For JupyterLab version older than 3 please see the instructions on the
+[2.x branch](https://github.com/jupyterlab/jupyterlab-github/tree/2.x).
 
-To install the labextension, enter the following in your terminal:
+### 1. Installing both server and prebuilt lab extension
+
+To install the both the server extension and (prebuilt) lab extension, enter the following in your terminal:
 
 ```bash
-jupyter labextension install @jupyterlab/github
+pip install jupyterlab-github
 ```
 
-With only this installed, the extension should work, and you can experience the joys of
-being rate-limited first-hand!
+After restarting JupyterLab, the extension should work, and you can experience
+the joys of being rate-limited first-hand!
 
 ### 2. Getting your credentials from GitHub
 
@@ -100,23 +106,48 @@ You can register an OAuth application with GitHub by following these steps:
 It is important to note that the "Client Secret" string is, as the name suggests, a secret.
 _Do not_ share this value online, as people may be able to use it to impersonate you on GitHub.
 
-### 3. Installing the serverextension
+### 3. Enabling and configuring the server extension
 
-Install the serverextension using pip, and then enable it:
+The server extension will be enabled by default on new JupyterLab installations
+if you installed it with pip. If you used Extension Manager in JupyterLab 3.x,
+please uninstall the extension and install it again with the instructions from point (1).
+
+Confirm that the server extension is installed and enabled with:
 
 ```bash
-pip install jupyterlab_github
+jupyter server extension list
 ```
 
-If you are running Notebook 5.2 or earlier, enable the server extension by running
+you should see the following:
+
+```
+- Validating jupyterlab_github...
+     jupyterlab_github 3.0.0 OK
+```
+
+On some older installations (e.g. old JupyterHub versions) which use jupyter
+`notebook` server instead of the new `jupyter-server`, the extension needs to
+show up on the legacy `serverextensions` list (note: no space between _server_ and _extension_):
 
 ```bash
-jupyter serverextension enable --sys-prefix jupyterlab_github
+jupyter serverextension list
+```
+
+If the extension is not enabled run:
+
+```bash
+jupyter server extension enable jupyterlab_github
+```
+
+or if using the legacy `notebook` server:
+
+```bash
+jupyter serverextension enable jupyterlab_github
 ```
 
 You now need to add the credentials you got from GitHub
-to your notebook configuration file. Instructions for generating a configuration
-file can be found [here](http://jupyter-notebook.readthedocs.io/en/stable/config_overview.html#configure-nbserver).
+to your server configuration file. Instructions for generating a configuration
+file can be found [here](https://jupyter-server.readthedocs.io/en/stable/users/configuration.html#configuring-a-jupyter-server).
 Once you have identified this file, add the following lines to it:
 
 ```python

@@ -10,7 +10,7 @@ from traitlets.config import Configurable
 from notebook.utils import url_path_join, url_escape
 from notebook.base.handlers import APIHandler
 
-__version__ = '2.0.0'
+from ._version import __version__
 
 
 link_regex = re.compile(r'<([^>]*)>;\s*rel="([\w]*)\"')
