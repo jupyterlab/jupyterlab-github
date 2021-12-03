@@ -1,5 +1,7 @@
 # JupyterLab GitHub
 
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/jupyterlab/jupyterlab-github/master?urlpath=lab)
+
 A JupyterLab extension for accessing GitHub repositories.
 
 ### What this extension is
