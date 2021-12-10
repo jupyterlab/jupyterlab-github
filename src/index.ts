@@ -34,12 +34,8 @@ const PLUGIN_ID = '@jupyterlab/github:drive';
  */
 const fileBrowserPlugin: JupyterFrontEndPlugin<void> = {
   id: PLUGIN_ID,
-  requires: [
-    IDocumentManager,
-    IFileBrowserFactory,
-    ILayoutRestorer,
-    ISettingRegistry
-  ],
+  requires: [IDocumentManager, IFileBrowserFactory, ISettingRegistry],
+  optional: [ILayoutRestorer],
   activate: activateFileBrowser,
   autoStart: true
 };
@@ -51,8 +47,8 @@ function activateFileBrowser(
   app: JupyterFrontEnd,
   manager: IDocumentManager,
   factory: IFileBrowserFactory,
-  restorer: ILayoutRestorer,
-  settingRegistry: ISettingRegistry
+  settingRegistry: ISettingRegistry,
+  restorer: ILayoutRestorer | null
 ): void {
   // Add the GitHub backend to the contents manager.
   const drive = new GitHubDrive(app.docRegistry);
@@ -75,7 +71,9 @@ function activateFileBrowser(
   gitHubBrowser.id = 'github-file-browser';
 
   // Add the file browser widget to the application restorer.
-  restorer.add(gitHubBrowser, NAMESPACE);
+  if (restorer) {
+    restorer.add(gitHubBrowser, NAMESPACE);
+  }
   app.shell.add(gitHubBrowser, 'left', { rank: 102 });
 
   let shouldWarn = false;
