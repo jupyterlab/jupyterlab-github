@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "declaration": true,
+    "lib": ["es2015", "dom", "esnext.asynciterable"],
     "noImplicitAny": true,
     "strictNullChecks": true,
     "noEmitOnError": true,
@@ -18,7 +19,8 @@
     "rootDir": "src",
     "strict": true,
     "types": [],
-    "jsx": "react"
+    "jsx": "react",
+    "skipLibCheck": true
   },
   "include": ["src/*"]
 }

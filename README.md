@@ -63,6 +63,21 @@ To install the both the server extension and (prebuilt) lab extension, enter the
 pip install jupyterlab-github
 ```
 
+Alternatively, build from source and install with:
+
+```bash
+pip install .
+```
+
+Upon successful installation, `jupyterlab_github` should appear in the list of extensions:
+
+```bash
+jupyter labextension list
+JupyterLab v3.6.4
+/opt/conda/share/jupyter/labextensions
+        @jupyterlab/github v3.0.1 enabled OK (python, jupyterlab_github)
+```
+
 After restarting JupyterLab, the extension should work, and you can experience
 the joys of being rate-limited first-hand!
 
