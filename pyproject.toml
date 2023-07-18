@@ -52,6 +52,7 @@ ensured-targets = [
     "jupyterlab_github/labextension/package.json",
 ]
 skip-if-exists = ["jupyterlab_github/labextension/static/style.js"]
+optional-editable-build = true
 
 [tool.hatch.build.hooks.jupyter-builder.build-kwargs]
 build_cmd = "build:prod"
