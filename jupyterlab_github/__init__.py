@@ -129,11 +129,21 @@ class GitHubHandler(APIHandler):
             next_page_path = links.get('next', None)
 
         return next_page_path
+    
+def _jupyter_labextension_paths():
+    return [
+        {
+            "src": "labextension",
+            "dest": "@jupyterlab/github-extension",
+        }
+    ]
+
 
 def _jupyter_server_extension_paths():
     return [{
         'module': 'jupyterlab_github'
     }]
+
 
 def load_jupyter_server_extension(nb_server_app):
     """

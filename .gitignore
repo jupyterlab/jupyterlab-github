@@ -11,9 +11,12 @@ node_modules/
 .ipynb_checkpoints/
 npm-debug.log
 package-lock.json
-
+.yarn
 *.tsbuildinfo
 jupyterlab_github/labextension
+
+# Version file handled by hatch
+jupyterlab_github/_version.py
 
 # Created by https://www.gitignore.io/api/python
 # Edit at https://www.gitignore.io/?templates=python
