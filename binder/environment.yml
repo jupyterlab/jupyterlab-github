@@ -11,10 +11,10 @@ channels:
 
 dependencies:
   # runtime dependencies
-  - python >=3.8,<3.9.0a0
-  - jupyterlab >=3,<4.0.0a0
+  - python >=3.8,<3.11.0
+  - jupyterlab >=4,<5.0.0a0
   # labextension build dependencies
-  - nodejs >=14,<15
+  - nodejs >=18,<19
   - pip
   - wheel
   # additional packages for demos
