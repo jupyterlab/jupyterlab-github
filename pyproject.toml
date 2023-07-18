@@ -59,7 +59,7 @@ build_cmd = "build:prod"
 npm = ["jlpm"]
 
 [tool.hatch.build.hooks.jupyter-builder.editable-build-kwargs]
-build_cmd = "install:extension"
+build_cmd = "build"
 npm = ["jlpm"]
 source_dir = "src"
 build_dir = "jupyterlab_github/labextension"
