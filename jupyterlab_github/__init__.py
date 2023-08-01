@@ -1,6 +1,6 @@
 import re, json, copy
 
-import tornado.gen as gen
+from tornado import web
 from tornado.httputil import url_concat
 from tornado.httpclient import AsyncHTTPClient, HTTPRequest, HTTPError
 
@@ -21,30 +21,33 @@ class GitHubConfig(Configurable):
     Allows configuration of access to the GitHub api
     """
     allow_client_side_access_token = Bool(
-        False, config=True,
+        False,
         help=(
             "If True the access token specified in the JupyterLab settings "
             "will take precedence. If False the token specified in JupyterLab "
             "will be ignored. Storing your access token in the client can "
             "present a security risk so be careful if enabling this setting."
         )
-    )
+    ).tag(config=True)
+
     api_url = Unicode(
-        'https://api.github.com', config=True,
+        'https://api.github.com',
         help="The url for the GitHub api"
-    )
+    ).tag(config=True)
+
     access_token = Unicode(
-        '', config=True,
+        '',
         help="A personal access token for GitHub."
-    )
+    ).tag(config=True)
+
     validate_cert = Bool(
-        True, config=True,
+        True,
         help=(
             "Whether to validate the servers' SSL certificate on requests "
             "made to the GitHub api. In general this is a bad idea so only "
             "disable SSL validation if you know what you are doing!"
         )
-    )
+    ).tag(config=True)
 
 
 class GitHubHandler(APIHandler):
@@ -55,8 +58,11 @@ class GitHubHandler(APIHandler):
     which allows for a higher rate limit. Without this, the rate limit on
     unauthenticated calls is so limited as to be practically useless.
     """
-    @gen.coroutine
-    def get(self, path):
+
+    client = AsyncHTTPClient()
+
+    @web.authenticated
+    async def get(self, path):
         """
         Proxy API requests to GitHub, adding authentication parameter(s) if
         they have been set.
@@ -85,16 +91,18 @@ class GitHubHandler(APIHandler):
             elif c.access_token != '':
                 # Preferentially use the config access_token if set
                 token = c.access_token
+            else:
+                token = ''
 
             api_path = url_concat(api_path, params)
-            client = AsyncHTTPClient()
+            
             request = HTTPRequest(
                 api_path,
                 validate_cert=c.validate_cert,
                 user_agent='JupyterLab GitHub',
                 headers={"Authorization": "token {}".format(token)}
             )
-            response = yield client.fetch(request)
+            response = await self.client.fetch(request)
             data = json.loads(response.body.decode('utf-8'))
 
             # Check if we need to paginate results.
@@ -104,7 +112,7 @@ class GitHubHandler(APIHandler):
             while next_page_path:
                 request = copy.copy(request)
                 request.url = next_page_path
-                response = yield client.fetch(request)
+                response = await self.client.fetch(request)
                 next_page_path = self._maybe_get_next_page_path(response)
                 data.extend(json.loads(response.body.decode('utf-8')))
 
@@ -129,6 +137,7 @@ class GitHubHandler(APIHandler):
             next_page_path = links.get('next', None)
 
         return next_page_path
+
     
 def _jupyter_labextension_paths():
     return [
