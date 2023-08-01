@@ -1,5 +1,5 @@
 {
-  "name": "@jupyterlab/github-extension",
+  "name": "@jupyterlab/github",
   "version": "4.0.0",
   "description": "JupyterLab viewer for GitHub repositories",
   "keywords": [

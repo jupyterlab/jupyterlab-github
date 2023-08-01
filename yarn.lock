@@ -411,9 +411,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jupyterlab/github-extension@workspace:.":
+"@jupyterlab/github@workspace:.":
   version: 0.0.0-use.local
-  resolution: "@jupyterlab/github-extension@workspace:."
+  resolution: "@jupyterlab/github@workspace:."
   dependencies:
     "@jupyterlab/application": ^4.0.0
     "@jupyterlab/apputils": ^4.0.0

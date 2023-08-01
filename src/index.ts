@@ -31,7 +31,7 @@ const NAMESPACE = 'github-filebrowser';
 /**
  * The ID for the plugin.
  */
-const PLUGIN_ID = '@jupyterlab/github-extension:drive';
+const PLUGIN_ID = '@jupyterlab/github:drive';
 
 /**
  * GitHub Icon class.
