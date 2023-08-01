@@ -7,8 +7,8 @@ from tornado.httpclient import AsyncHTTPClient, HTTPRequest, HTTPError
 from traitlets import Unicode, Bool
 from traitlets.config import Configurable
 
-from notebook.utils import url_path_join, url_escape
-from notebook.base.handlers import APIHandler
+from jupyter_server.utils import url_path_join, url_escape
+from jupyter_server.base.handlers import APIHandler
 
 from ._version import __version__
 
@@ -134,7 +134,7 @@ def _jupyter_labextension_paths():
     return [
         {
             "src": "labextension",
-            "dest": "@jupyterlab/github-extension",
+            "dest": "@jupyterlab/github",
         }
     ]
 
