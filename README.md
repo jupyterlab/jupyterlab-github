@@ -39,14 +39,14 @@ This process is described in the [installation](#Installation) section.
 
 ## Prerequisites
 
-- JupyterLab 3.0
+- JupyterLab > 3.0
 - A GitHub account for the server extension
 
 ## Installation
 
 As discussed above, this extension has both a server extension and a lab extension.
 Both extensions will be installed by default when installing from PyPI, but you may
-have only lab extension installed if you used the Extension Manager in JupyterLab 3.x.
+have only lab extension installed if you used the Extension Manager in JupyterLab.
 
 We recommend completing the steps described below as to not be rate-limited.
 The purpose of the server extension is to add GitHub credentials that you will need to acquire
@@ -57,10 +57,20 @@ For JupyterLab version older than 3 please see the instructions on the
 
 ### 1. Installing both server and prebuilt lab extension
 
+#### JupyterLab 4.x
+
 To install the both the server extension and (prebuilt) lab extension, enter the following in your terminal:
 
 ```bash
 pip install jupyterlab-github
+```
+
+#### JupyterLab 3.x
+
+We need to pin the extension version to `3.0.1` for making it work on the JupyterLab 3.x.
+
+```bash
+pip install 'jupyterlab-github==3.0.1'
 ```
 
 After restarting JupyterLab, the extension should work, and you can experience
@@ -111,7 +121,7 @@ _Do not_ share this value online, as people may be able to use it to impersonate
 ### 3. Enabling and configuring the server extension
 
 The server extension will be enabled by default on new JupyterLab installations
-if you installed it with pip. If you used Extension Manager in JupyterLab 3.x,
+if you installed it with pip. If you used Extension Manager in JupyterLab,
 please uninstall the extension and install it again with the instructions from point (1).
 
 Confirm that the server extension is installed and enabled with:
@@ -124,7 +134,7 @@ you should see the following:
 
 ```
 - Validating jupyterlab_github...
-     jupyterlab_github 3.0.0 OK
+     jupyterlab_github 4.0.0 OK
 ```
 
 On some older installations (e.g. old JupyterHub versions) which use jupyter
