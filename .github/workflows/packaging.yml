@@ -1,0 +1,93 @@
+name: Packaging
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: '*'
+
+env:
+  PIP_DISABLE_PIP_VERSION_CHECK: 1
+
+defaults:
+  run:
+    shell: bash -l {0}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Base Setup
+      uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+
+    - name: Install dependencies
+      run: python -m pip install -U "jupyterlab>=4.0.0,<5"
+
+    - name: Package the extension
+      run: |
+        set -eux
+        pip install build
+        python -m build
+        pip uninstall -y "jupyterlab_github" jupyterlab
+
+    - name: Upload extension packages
+      uses: actions/upload-artifact@v3
+      with:
+        name: extension-artifacts
+        path: ./dist/jupyterlab_github*
+        if-no-files-found: error
+
+  install:
+    runs-on: ${{ matrix.os }}-latest
+    needs: [build]
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu, macos, windows]
+        python: ['3.8', '3.11']
+        include:
+          - python: '3.8'
+            dist: 'jupyterlab_github*.tar.gz'
+          - python: '3.11'
+            dist: 'jupyterlab_github*.whl'
+          - os: windows
+            py_cmd: python
+          - os: macos
+            py_cmd: python3
+          - os: ubuntu
+            py_cmd: python
+
+    steps:
+      - name: Install Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python }}
+          architecture: 'x64'
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: extension-artifacts
+          path: ./dist
+
+      - name: Install prerequisites
+        run: |
+          ${{ matrix.py_cmd }} -m pip install pip wheel
+
+      - name: Install package
+        run: |
+          cd dist
+          ${{ matrix.py_cmd }} -m pip install -vv ${{ matrix.dist }}
+
+      - name: Validate environment
+        run: |
+          ${{ matrix.py_cmd }} -m pip freeze
+          ${{ matrix.py_cmd }} -m pip check
+
+      - name: Validate install
+        run: |
+          jupyter labextension list
+          jupyter labextension list 2>&1 | grep -ie "@jupyterlab/github.*OK"

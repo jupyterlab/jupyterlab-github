@@ -1,0 +1,45 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+defaults:
+  run:
+    shell: bash -l {0}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Base Setup
+        uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+
+      - name: Install JupyterLab
+        run: python -m pip install -U "jupyterlab>=4.0.0,<5"
+
+      - name: Lint the extension
+        run: |
+          set -eux
+          jlpm
+          jlpm run lint:check
+
+      - name: Build the extension
+        run: |
+          set -eux
+          python -m pip install .
+
+          jupyter labextension list
+          jupyter labextension list 2>&1 | grep -ie "@jupyterlab/github.*OK"
+
+          python -m jupyterlab.browser_check
