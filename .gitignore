@@ -13,6 +13,7 @@ npm-debug.log
 package-lock.json
 .yarn
 *.tsbuildinfo
+*.stylelintcache
 jupyterlab_github/labextension
 
 # Version file handled by hatch

@@ -411,33 +411,6 @@ module.exports = {
     'vue/template-curly-spacing': 'off',
     'wrap-iife': 'off',
     'wrap-regex': 'off',
-    'yield-star-spacing': 'off',
-    '@typescript-eslint/tslint/config': [
-      'error',
-      {
-        rules: {
-          ban: [
-            true,
-            ['_', 'forEach'],
-            ['_', 'each'],
-            ['$', 'each'],
-            ['angular', 'forEach']
-          ],
-          prettier: [
-            true,
-            {
-              singleQuote: true
-            }
-          ],
-          whitespace: [
-            true,
-            'check-branch',
-            'check-operator',
-            'check-separator',
-            'check-type'
-          ]
-        }
-      }
-    ]
+    'yield-star-spacing': 'off'
   }
 };
