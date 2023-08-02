@@ -1,6 +1,6 @@
 # JupyterLab GitHub
 
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/jupyterlab/jupyterlab-github/master?urlpath=lab)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/jupyterlab/jupyterlab-github/main?urlpath=lab)
 
 A JupyterLab extension for accessing GitHub repositories.
 
@@ -14,7 +14,7 @@ any other notebook. You can also attach a kernel to text files and run those.
 Basically, you should be able to open any file in a repository that JupyterLab can handle.
 
 Here is a screenshot of the plugin opening this very file on GitHub:
-![gitception](https://raw.githubusercontent.com/jupyterlab/jupyterlab-github/master/gitception.png 'Gitception')
+![gitception](https://raw.githubusercontent.com/jupyterlab/jupyterlab-github/main/gitception.png 'Gitception')
 
 ### What this extension is not
 
