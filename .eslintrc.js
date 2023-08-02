@@ -31,8 +31,7 @@ module.exports = {
   plugins: [
     'eslint-plugin-import',
     'eslint-plugin-no-null',
-    '@typescript-eslint',
-    '@typescript-eslint/tslint'
+    '@typescript-eslint'
   ],
   root: true,
   rules: {
