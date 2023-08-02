@@ -9,6 +9,8 @@ import {
 
 import { Dialog, showDialog } from '@jupyterlab/apputils';
 
+import { LabIcon } from '@jupyterlab/ui-components';
+
 import { IDocumentManager } from '@jupyterlab/docmanager';
 
 import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
@@ -19,6 +21,8 @@ import { GitHubDrive, DEFAULT_GITHUB_BASE_URL } from './contents';
 
 import { GitHubFileBrowser } from './browser';
 
+import GitHubSvgStr from '../style/octocat-light.svg';
+
 /**
  * GitHub filebrowser plugin state namespace.
  */
@@ -28,6 +32,14 @@ const NAMESPACE = 'github-filebrowser';
  * The ID for the plugin.
  */
 const PLUGIN_ID = '@jupyterlab/github:drive';
+
+/**
+ * GitHub Icon class.
+ */
+export const gitHubIcon = new LabIcon({
+  name: `${NAMESPACE}:icon`,
+  svgstr: GitHubSvgStr
+});
 
 /**
  * The JupyterLab plugin for the GitHub Filebrowser.
@@ -65,7 +77,8 @@ function activateFileBrowser(
 
   const gitHubBrowser = new GitHubFileBrowser(browser, drive);
 
-  gitHubBrowser.title.iconClass = 'jp-GitHub-icon jp-SideBar-tabIcon';
+  gitHubBrowser.title.icon = gitHubIcon;
+  gitHubBrowser.title.iconClass = 'jp-SideBar-tabIcon';
   gitHubBrowser.title.caption = 'Browse GitHub';
 
   gitHubBrowser.id = 'github-file-browser';

@@ -272,7 +272,7 @@ export class GitHubDrive implements Contents.IDrive {
     );
     return this._apiRequest<GitHubDirectoryListing>(dirApiPath).then(
       dirContents => {
-        for (let item of dirContents) {
+        for (const item of dirContents) {
           if (item.path === resource.path) {
             return item.download_url;
           }
@@ -421,7 +421,7 @@ export class GitHubDrive implements Contents.IDrive {
     );
     return this._apiRequest<GitHubDirectoryListing>(dirApiPath)
       .then(dirContents => {
-        for (let item of dirContents) {
+        for (const item of dirContents) {
           if (item.path === resource.path) {
             blobData = item as GitHubFileContents;
             return item.sha;
@@ -528,13 +528,13 @@ export class GitHubDrive implements Contents.IDrive {
    */
   private _apiRequest<T>(apiPath: string): Promise<T> {
     return this._useProxy.then(result => {
-      let parts = apiPath.split('?');
-      let path = parts[0];
-      let query = (parts[1] || '').split('&');
-      let params: { [key: string]: string } = {};
+      const parts = apiPath.split('?');
+      const path = parts[0];
+      const query = (parts[1] || '').split('&');
+      const params: { [key: string]: string } = {};
       for (const param of query) {
         if (param) {
-          let [key, value] = param.split('=');
+          const [key, value] = param.split('=');
           params[key] = value;
         }
       }
@@ -551,7 +551,7 @@ export class GitHubDrive implements Contents.IDrive {
       if (path) {
         requestUrl = URLExt.join(requestUrl, path);
       }
-      let newQuery = Object.keys(params)
+      const newQuery = Object.keys(params)
         .map(key => `${key}=${params[key]}`)
         .join('&');
       requestUrl += '?' + newQuery;
@@ -741,7 +741,7 @@ namespace Private {
    */
   export function reposToDirectory(repos: GitHubRepo[]): Contents.IModel {
     // If it is a directory, convert to that.
-    let content: Contents.IModel[] = repos.map(repo => {
+    const content: Contents.IModel[] = repos.map(repo => {
       return {
         name: repo.name,
         path: repo.full_name,

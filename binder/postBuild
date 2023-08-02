@@ -32,9 +32,6 @@ _(sys.executable, "-m", "jupyter", "labextension", "develop", "--overwrite", "."
 # verify the environment the extension didn't break anything
 _(sys.executable, "-m", "pip", "check")
 
-# list the extensions
-_("jupyter", "server", "extension", "list")
-
 # initially list installed extensions to determine if there are any surprises
 _("jupyter", "labextension", "list")
 

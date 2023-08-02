@@ -7,7 +7,7 @@
     "noUnusedLocals": true,
     "module": "esnext",
     "moduleResolution": "node",
-    "target": "es2017",
+    "target": "es2018",
     "outDir": "lib",
     "allowSyntheticDefaultImports": true,
     "composite": true,

@@ -56,9 +56,10 @@ export class GitHubFileBrowser extends Widget {
           window.open(url);
           return;
         }
-        const localPath = this._browser.model.manager.services.contents.localPath(
-          this._browser.model.path
-        );
+        const localPath =
+          this._browser.model.manager.services.contents.localPath(
+            this._browser.model.path
+          );
         const resource = parsePath(localPath);
         url = URLExt.join(url, resource.user);
         if (resource.repository) {
@@ -85,9 +86,10 @@ export class GitHubFileBrowser extends Widget {
         if (!this._binderActive) {
           return;
         }
-        const localPath = this._browser.model.manager.services.contents.localPath(
-          this._browser.model.path
-        );
+        const localPath =
+          this._browser.model.manager.services.contents.localPath(
+            this._browser.model.path
+          );
         const resource = parsePath(localPath);
         const url = URLExt.join(
           MY_BINDER_BASE_URL,
@@ -107,7 +109,7 @@ export class GitHubFileBrowser extends Widget {
 
     // Add our own refresh button, since the other one is hidden
     // via CSS.
-    let refresher = new ToolbarButton({
+    const refresher = new ToolbarButton({
       icon: refreshIcon,
       onClick: () => {
         this._browser.model.refresh();
@@ -146,7 +148,7 @@ export class GitHubFileBrowser extends Widget {
       // appears to revert to document.body. If the user has subsequently
       // focused another element, don't focus the browser listing.
       if (document.activeElement === document.body) {
-        const listing = (this._browser.layout as PanelLayout).widgets[2];
+        const listing = (this._browser.layout as PanelLayout).widgets[1];
         listing.node.focus();
       }
     });
@@ -225,7 +227,7 @@ export class GitHubFileBrowser extends Widget {
 
     // If we currently have an error panel, remove it.
     if (this._errorPanel) {
-      const listing = (this._browser.layout as PanelLayout).widgets[2];
+      const listing = (this._browser.layout as PanelLayout).widgets[1];
       listing.node.removeChild(this._errorPanel.node);
       this._errorPanel.dispose();
       this._errorPanel = null;
@@ -238,7 +240,7 @@ export class GitHubFileBrowser extends Widget {
           'You will need to wait about an hour before ' +
           'continuing'
       );
-      const listing = (this._browser.layout as PanelLayout).widgets[2];
+      const listing = (this._browser.layout as PanelLayout).widgets[1];
       listing.node.appendChild(this._errorPanel.node);
       return;
     }
@@ -249,7 +251,7 @@ export class GitHubFileBrowser extends Widget {
         ? `"${resource.user}" appears to be an invalid user name!`
         : 'Please enter a GitHub user name';
       this._errorPanel = new GitHubErrorPanel(message);
-      const listing = (this._browser.layout as PanelLayout).widgets[2];
+      const listing = (this._browser.layout as PanelLayout).widgets[1];
       listing.node.appendChild(this._errorPanel.node);
       return;
     }
