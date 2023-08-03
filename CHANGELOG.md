@@ -2,6 +2,22 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 4.0.0
+
+([Full Changelog](https://github.com/jupyterlab/jupyterlab-github/compare/v3.0.1...fcb398305c2d8174256078cb4cca1fd7c5bb6e69))
+
+### Maintenance and upkeep improvements
+
+- Rename default branch to `main` [#148](https://github.com/jupyterlab/jupyterlab-github/pull/148) ([@jtpio](https://github.com/jtpio))
+- Upgrade extension to JupyterLab 4 [#145](https://github.com/jupyterlab/jupyterlab-github/pull/145) ([@mahendrapaipuri](https://github.com/mahendrapaipuri))
+- Optional ILayoutRestorer [#128](https://github.com/jupyterlab/jupyterlab-github/pull/128) ([@jtpio](https://github.com/jtpio))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyterlab/jupyterlab-github/graphs/contributors?from=2021-11-27&to=2023-08-03&type=c))
+
+[@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyterlab-github+involves%3Agithub-actions+updated%3A2021-11-27..2023-08-03&type=Issues) | [@jtpio](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyterlab-github+involves%3Ajtpio+updated%3A2021-11-27..2023-08-03&type=Issues) | [@mahendrapaipuri](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyterlab-github+involves%3Amahendrapaipuri+updated%3A2021-11-27..2023-08-03&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyterlab-github+involves%3Awelcome+updated%3A2021-11-27..2023-08-03&type=Issues)
+
 <!-- <END NEW CHANGELOG ENTRY> -->
 
 ## v3.0.1
