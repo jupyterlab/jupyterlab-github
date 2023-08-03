@@ -11,14 +11,14 @@ on:
       steps_to_skip:
         description: "Comma separated list of steps to skip"
         required: false
-        default: "ensure-sha"
 
 jobs:
   publish_release:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
     steps:
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
-
       - name: Populate Release
         id: populate-release
         uses: jupyter-server/jupyter_releaser/.github/actions/populate-release@v2
