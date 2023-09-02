@@ -192,3 +192,22 @@ and under the GitHub settings add
 
 where `owner` is the GitHub user/org,
 and `repository` is the name of the repository you want to open.
+
+## Development
+
+For a development install, do the following in the repository directory:
+
+```bash
+jlpm install
+jlpm run build
+jupyter labextension link .
+```
+
+You can then run JupyterLab in developer mode to automatically pick up changes
+to `@jupyterlab/github`. Launch JupyterLab using
+```bash
+jupyter lab --watch
+```
+This will automatically recompile `@jupyterlab/github` upon changes, and
+JupyterLab will rebuild itself. You should then be able to refresh the page and
+see your changes.
